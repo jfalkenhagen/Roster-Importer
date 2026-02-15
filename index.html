@@ -12,7 +12,6 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
         :root {
             --primary: #007AFF;
             --primary-dark: #0051D5;
@@ -26,7 +25,6 @@
             --border: rgba(0, 0, 0, 0.1);
             --shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg-gradient);
@@ -37,7 +35,6 @@
             justify-content: center;
             padding: 20px;
         }
-
         .container {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
@@ -48,7 +45,6 @@
             max-width: 420px;
             animation: slideUp 0.4s ease-out;
         }
-
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -59,18 +55,15 @@
                 transform: translateY(0);
             }
         }
-
         .header {
             text-align: center;
             margin-bottom: 32px;
         }
-
         .header-icon {
             font-size: 48px;
             margin-bottom: 12px;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
         }
-
         h1 {
             font-size: 28px;
             font-weight: 700;
@@ -80,16 +73,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
         .subtitle {
             color: var(--text-secondary);
             font-size: 15px;
         }
-
         .form-group {
             margin-bottom: 24px;
         }
-
         label {
             display: block;
             font-size: 15px;
@@ -97,7 +87,6 @@
             margin-bottom: 10px;
             color: var(--text);
         }
-
         .step-badge {
             display: inline-block;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -112,7 +101,6 @@
             margin-right: 8px;
             box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
         }
-
         input[type="file"] {
             width: 100%;
             padding: 14px 16px;
@@ -123,12 +111,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         input[type="file"]:hover {
             border-color: var(--primary);
             background: rgba(0, 122, 255, 0.05);
         }
-
         input[type="text"] {
             width: 100%;
             padding: 14px 16px;
@@ -138,13 +124,11 @@
             background: white;
             transition: all 0.3s ease;
         }
-
         input[type="text"]:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
-
         .suggestions {
             border: 2px solid var(--border);
             border-radius: 12px;
@@ -158,7 +142,6 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
             margin-top: 4px;
         }
-
         .suggestion-item {
             padding: 14px 16px;
             border-bottom: 1px solid var(--border);
@@ -166,22 +149,18 @@
             font-size: 15px;
             transition: background 0.2s ease;
         }
-
         .suggestion-item:last-child {
             border-bottom: none;
         }
-
         .suggestion-item:active {
             background: rgba(0, 122, 255, 0.1);
         }
-
         .button-group {
             display: flex;
             flex-direction: column;
             gap: 12px;
             margin-top: 24px;
         }
-
         button {
             width: 100%;
             padding: 16px 24px;
@@ -197,30 +176,24 @@
             gap: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-
         button:active {
             transform: scale(0.98);
         }
-
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
         }
-
         .btn-primary:hover {
             box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
         }
-
         .btn-secondary {
             background: white;
             color: var(--primary);
             border: 2px solid var(--primary);
         }
-
         .btn-secondary:hover {
             background: rgba(0, 122, 255, 0.05);
         }
-
         #status {
             margin-top: 20px;
             padding: 14px 16px;
@@ -231,23 +204,19 @@
             line-height: 1.6;
             animation: slideUp 0.3s ease-out;
         }
-
-        .error { 
+        .error {
             background: rgba(255, 59, 48, 0.1);
             color: var(--error);
             border: 2px solid var(--error);
         }
-        
-        .success { 
+        .success {
             background: rgba(52, 199, 89, 0.1);
             color: var(--success);
             border: 2px solid var(--success);
         }
-
-        .hidden { 
-            display: none !important; 
+        .hidden {
+            display: none !important;
         }
-
         .instructions {
             background: linear-gradient(135deg, rgba(88, 86, 214, 0.1), rgba(102, 126, 234, 0.1));
             border-left: 4px solid var(--secondary);
@@ -258,36 +227,29 @@
             line-height: 1.8;
             display: none;
         }
-
         .instructions.show {
             display: block;
             animation: slideUp 0.3s ease-out;
         }
-
         .instructions strong {
             display: block;
             margin-bottom: 8px;
             font-size: 14px;
             color: var(--secondary);
         }
-
         .instructions ol {
             margin: 8px 0 0 20px;
         }
-
         .instructions li {
             margin: 6px 0;
         }
-
         .search-wrapper {
             position: relative;
         }
-
         @media (max-width: 480px) {
             .container {
                 padding: 24px 20px;
             }
-            
             h1 {
                 font-size: 24px;
             }
@@ -295,19 +257,16 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
         <div class="header-icon">📅</div>
         <h1>Roster Importer</h1>
         <p class="subtitle">Convert your roster to iPhone calendar</p>
     </div>
-    
     <div class="form-group">
         <label><span class="step-badge">1</span>Upload Excel File</label>
         <input type="file" id="upload" accept=".xlsx, .xls">
     </div>
-
     <div id="search-container" class="hidden">
         <div class="form-group">
             <label><span class="step-badge">2</span>Search Your Name</label>
@@ -316,7 +275,6 @@
                 <div id="suggestions" class="suggestions"></div>
             </div>
         </div>
-
         <div class="button-group">
             <button id="downloadBtn" class="btn-primary">
                 📥 Download Calendar File
@@ -325,7 +283,6 @@
                 📤 Share/Email File
             </button>
         </div>
-
         <div id="instructions" class="instructions">
             <strong>📲 To Import on iPhone:</strong>
             <ol>
@@ -335,24 +292,19 @@
             </ol>
         </div>
     </div>
-
     <div id="status"></div>
 </div>
-
 <script>
     let rosterData = [];
-    let staffList = [];
-    let shiftDates = [];
-    let weekStartDate = null;
-
+    let staffList = []; // Array of {fullName, firstName, rowIndex}
+    let shiftDates = []; // Array of {colIndex, date}
+    let lastGeneratedICS = null;
+    let lastGeneratedName = null;
     document.getElementById('upload').addEventListener('change', handleFile, false);
-
     function handleFile(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         showStatus("📂 Loading file...", "success");
-
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
@@ -367,86 +319,78 @@
         };
         reader.readAsArrayBuffer(file);
     }
-
-    // Parse Australian date format (DD/MM/YYYY or D/M/YYYY)
-    function parseAustralianDate(dateString) {
-        // Try to extract date from "DATE: 2/16/2026" format
-        const match = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-        if (match) {
-            const day = parseInt(match[1]);
-            const month = parseInt(match[2]);
-            const year = parseInt(match[3]);
-            
-            // Australian format: day/month/year
-            // Create date with month-1 because JS months are 0-indexed
-            return new Date(year, month - 1, day);
-        }
-        return null;
-    }
-
+    
     function processExcelData(data) {
         rosterData = data;
         staffList = [];
         shiftDates = [];
-        weekStartDate = null;
 
-        // FLEXIBLE WEEK START DATE FINDER - with Australian date format support
-        for (let rowIndex = 0; rowIndex < Math.min(data.length, 7); rowIndex++) {
-            const row = data[rowIndex];
-            if (!row) continue;
-            
-            for (let colIndex = 0; colIndex < Math.min(row.length, 15); colIndex++) {
-                const cell = row[colIndex];
-                
-                // Check if cell is a Date object
-                if (cell instanceof Date && !isNaN(cell)) {
-                    if (cell.getFullYear() >= 2020 && cell.getFullYear() <= 2030) {
-                        weekStartDate = cell;
-                        console.log(`Found week start date: ${weekStartDate.toLocaleDateString('en-AU')} at row ${rowIndex + 1}, col ${String.fromCharCode(65 + colIndex)}`);
-                        break;
-                    }
-                }
-                
-                // Check if cell contains "DATE:" text - parse as Australian format
-                if (typeof cell === 'string' && cell.includes('DATE:')) {
-                    const parsedDate = parseAustralianDate(cell);
-                    if (parsedDate && !isNaN(parsedDate)) {
-                        weekStartDate = parsedDate;
-                        console.log(`Found week start date from text (AU format): ${weekStartDate.toLocaleDateString('en-AU')}`);
-                        break;
-                    }
-                }
-                
-                // Check for Excel serial date number
-                if (typeof cell === 'number' && cell > 40000 && cell < 50000) {
-                    weekStartDate = new Date((cell - 25569) * 86400 * 1000);
-                    console.log(`Found week start date from serial: ${weekStartDate.toLocaleDateString('en-AU')}`);
+        // 1. Find week starting date
+        // Context indicates "Change Dates in Cell G5" and date examples like "2/16/2026".
+        // We look dynamically in the first 10 rows/cols to find a date object or string.
+        let weekStart = null;
+        
+        for(let r=0; r<10; r++) {
+            if(!data[r]) continue;
+            for(let c=0; c<10; c++) {
+                const val = data[r][c];
+                if (val instanceof Date) {
+                    weekStart = val;
                     break;
                 }
+                // Check for string dates like "2/16/2026" or "DATE: 2/16/2026"
+                if (typeof val === 'string') {
+                     if (val.match(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4}/)) {
+                         // Attempt to parse string
+                         const cleanDate = val.replace('DATE:', '').trim();
+                         weekStart = new Date(cleanDate);
+                         if (!isNaN(weekStart)) break;
+                     }
+                }
             }
-            
-            if (weekStartDate) break;
+            if(weekStart) break;
         }
 
-        if (!weekStartDate || isNaN(weekStartDate)) {
-            showStatus("❌ Could not find week starting date in rows 1-7. Please check file format.", "error");
+        if (!weekStart || isNaN(weekStart)) {
+            // Fallback: The context explicitly mentions Cell G5 (Row index 4, Col index 6)
+            if (data[4] && data[4][6]) {
+                 weekStart = new Date(data[4][6]);
+            }
+        }
+
+        if (!weekStart || isNaN(weekStart)) {
+            showStatus("❌ Could not find week starting date (checked Cell G5 and others).", "error");
             return;
         }
 
-        // Find dates in row 7 (index 6), starting from column E (index 4)
-        const dateRow = data[6];
-        
+        // 2. Find dates in row 7 (index 6)
+        // Row 7 contains day numbers: 16, 17... 28, 1, 2. We must handle month rollover.
+        const dateRow = data[6]; // Row 7 (0-indexed as 6)
         if (!dateRow) {
-            showStatus("❌ Could not find row 7 with day numbers.", "error");
-            return;
+             showStatus("❌ Could not find date row (Row 7).", "error");
+             return;
         }
-        
+
+        let currentMonth = weekStart.getMonth();
+        let currentYear = weekStart.getFullYear();
+        let prevDayVal = 0;
+
         for (let colIndex = 4; colIndex < dateRow.length; colIndex++) {
             const cell = dateRow[colIndex];
+            
             if (typeof cell === 'number' && cell >= 1 && cell <= 31) {
-                // Use the week start date's month and year
-                const date = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), cell);
+                // Detect month rollover (e.g., going from 28 to 1)
+                if (cell < prevDayVal) {
+                    currentMonth++;
+                    if (currentMonth > 11) {
+                        currentMonth = 0;
+                        currentYear++;
+                    }
+                }
+                
+                const date = new Date(currentYear, currentMonth, cell);
                 shiftDates.push({ colIndex: colIndex, date: date });
+                prevDayVal = cell;
             }
         }
 
@@ -455,28 +399,30 @@
             return;
         }
 
-        // Find staff names
+        // 3. Find staff names
+        // Context shows names in format "SURNAME, Firstname" in column A
         for (let rowIndex = 7; rowIndex < data.length; rowIndex++) {
             const row = data[rowIndex];
-            const nameCell = row[0];
-            
-            if (nameCell && typeof nameCell === 'string') {
-                if (nameCell.includes(',')) {
-                    const parts = nameCell.split(',');
-                    if (parts.length >= 2) {
-                        const surname = parts[0].trim();
-                        const firstname = parts[1].trim().split(/\s+/)[0];
+            if (!row) continue;
+            const nameCell = row[0]; // Column A
+
+            if (nameCell && typeof nameCell === 'string' && nameCell.includes(',')) {
+                const parts = nameCell.split(',');
+                if (parts.length >= 2) {
+                    const surname = parts[0].trim();
+                    const firstname = parts[1].trim().split(/\s+/)[0]; // First word of first name
+
+                    // Filter out headers like "TOTAL Earlies" or "SURNAME"
+                    if (!surname.toUpperCase().includes('TOTAL') && 
+                        !surname.toUpperCase().includes('SURNAME') && 
+                        !surname.toUpperCase().includes('ORG UNIT') &&
+                        surname.length > 1 && firstname.length > 0) {
                         
-                        if (!surname.toUpperCase().includes('TOTAL') && 
-                            !surname.toUpperCase().includes('SURNAME') &&
-                            !surname.toUpperCase().includes('CASUAL') &&
-                            surname.length > 1 && firstname.length > 0) {
-                            staffList.push({
-                                fullName: nameCell,
-                                firstName: firstname,
-                                rowIndex: rowIndex
-                            });
-                        }
+                        staffList.push({
+                            fullName: nameCell,
+                            firstName: firstname,
+                            rowIndex: rowIndex
+                        });
                     }
                 }
             }
@@ -484,7 +430,7 @@
 
         if (staffList.length > 0) {
             document.getElementById('search-container').classList.remove('hidden');
-            showStatus(`✅ Loaded ${staffList.length} staff members and ${shiftDates.length} days (starting ${weekStartDate.toLocaleDateString('en-AU', {day: 'numeric', month: 'long', year: 'numeric'})}).`, "success");
+            showStatus(`✅ Loaded ${staffList.length} staff members and dates starting ${weekStart.toLocaleDateString()}.`, "success");
             document.getElementById('nameInput').focus();
         } else {
             showStatus("❌ No staff names found. Check that names are in format 'SURNAME, Firstname'.", "error");
@@ -494,21 +440,17 @@
     // Autocomplete
     const nameInput = document.getElementById('nameInput');
     const suggestionsBox = document.getElementById('suggestions');
-
     nameInput.addEventListener('input', function() {
         const input = this.value.toLowerCase().trim();
         suggestionsBox.innerHTML = '';
-        
         if (input.length < 2) {
             suggestionsBox.style.display = 'none';
             return;
         }
-
         const matches = staffList.filter(staff => {
             return staff.fullName.toLowerCase().includes(input) ||
                    staff.firstName.toLowerCase().includes(input);
         }).slice(0, 10);
-
         if (matches.length > 0) {
             suggestionsBox.style.display = 'block';
             matches.forEach(staff => {
@@ -525,18 +467,15 @@
             suggestionsBox.style.display = 'none';
         }
     });
-
     document.addEventListener('click', function(e) {
         if (e.target !== nameInput) {
             suggestionsBox.style.display = 'none';
         }
     });
-
     // Download Button
     document.getElementById('downloadBtn').addEventListener('click', function() {
         const result = generateCalendar();
         if (!result) return;
-
         const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -546,22 +485,18 @@
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
         document.getElementById('instructions').classList.add('show');
         showStatus("✅ Calendar file downloaded! Save to Files, then tap to open in Calendar.", "success");
     });
-
-    // Share/Email Button
+    // Share/Email Button (uses Web Share API)
     document.getElementById('shareBtn').addEventListener('click', function() {
         const result = generateCalendar();
         if (!result) return;
-
         const file = new File(
-            [result.icsContent], 
-            `${result.firstName}_Roster.ics`, 
+            [result.icsContent],
+            `${result.firstName}_Roster.ics`,
             { type: 'text/calendar' }
         );
-
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
                 title: `${result.firstName}'s Work Roster`,
@@ -576,6 +511,7 @@
                 }
             });
         } else {
+            // Fallback: Download
             const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -585,28 +521,22 @@
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
-            
             showStatus("✅ File downloaded (Share not supported on this browser).", "success");
         }
     });
-
     function generateCalendar() {
         const selectedName = nameInput.value.trim();
-        
         if (!selectedName) {
             showStatus("⚠️ Please enter a name.", "error");
             return null;
         }
-
-        const staff = staffList.find(s => 
+        const staff = staffList.find(s =>
             s.fullName.toLowerCase() === selectedName.toLowerCase()
         );
-
         if (!staff) {
-            const similar = staffList.filter(s => 
+            const similar = staffList.filter(s =>
                 s.fullName.toLowerCase().includes(selectedName.toLowerCase())
             ).slice(0, 3);
-            
             let errorMsg = `❌ Could not find "${selectedName}".`;
             if (similar.length > 0) {
                 errorMsg += `\n\nDid you mean:\n• ${similar.map(s => s.fullName).join('\n• ')}`;
@@ -614,30 +544,25 @@
             showStatus(errorMsg, "error");
             return null;
         }
-
-        const topRow = rosterData[staff.rowIndex];
-        const bottomRow = rosterData[staff.rowIndex + 1];
-
+        // Parse shifts for this person
+        // Shifts are split across current row and next row
+        const topRow = rosterData[staff.rowIndex]; // Row with start times
+        const bottomRow = rosterData[staff.rowIndex + 1]; // Row with end times
         let events = [];
-
         shiftDates.forEach(dateInfo => {
             const colIndex = dateInfo.colIndex;
             const date = dateInfo.date;
-            
-            const topCell = topRow[colIndex];
-            const bottomCell = bottomRow[colIndex];
-
+            const topCell = topRow ? topRow[colIndex] : null;
+            const bottomCell = bottomRow ? bottomRow[colIndex] : null;
             const shiftInfo = parseShift(topCell, bottomCell, date, staff.firstName);
             if (shiftInfo) {
                 events.push(shiftInfo);
             }
         });
-
         if (events.length === 0) {
             showStatus("❌ No shifts found for this person.", "error");
             return null;
         }
-
         return {
             icsContent: createICSContent(events, staff.fullName),
             firstName: staff.firstName,
@@ -648,63 +573,78 @@
     function parseShift(topCell, bottomCell, date, firstName) {
         if (!topCell && !bottomCell) return null;
         
-        let topStr = typeof topCell === 'string' ? topCell.trim() : '';
-        let bottomStr = typeof bottomCell === 'string' ? bottomCell.trim() : '';
+        let topStr = typeof topCell === 'string' ? topCell.trim() : (topCell ? String(topCell) : '');
+        let bottomStr = typeof bottomCell === 'string' ? bottomCell.trim() : (bottomCell ? String(bottomCell) : '');
         
-        // Skip non-work indicators
-        if (topStr.toUpperCase() === 'X' || topStr.toUpperCase() === 'RDO' ||
-            topStr.includes('SECONDMENT') || topStr.includes('LWOP') ||
-            topStr.includes('A/L') || topStr.includes('ML') ||
-            topStr.toUpperCase() === 'C' || topStr.toUpperCase() === 'R') {
-            return null;
-        }
+        // Clean strings for logic checking
+        const clean = (str) => str.toUpperCase().replace(/\s/g, '');
+        const topClean = clean(topStr);
+        
+        // Skip non-work indicators from context (X, RDO, A/L, ML, LWOP, SECONDMENT)
+        const skipKeywords = ['X', 'RDO', 'SECONDMENT', 'LWOP', 'A/L', 'ML', 'C'];
+        
+        // If top cell is explicitly a skip keyword, return null
+        if (skipKeywords.includes(topClean)) return null;
+        
+        // If top is empty, check if bottom has time. If top is empty and bottom is not a time, skip.
+        if (topClean === '' && !bottomStr.match(/\d{4}/)) return null;
 
         // Extract circled number and o/c notation
         let oncallNumber = '';
         let isOncall = false;
         
-        const circledMatch = topStr.match(/[①②③]/);
+        // Handle Circled numbers (①, ②, ③)
+        const circledMatch = topStr.match(/[①②③]/) || bottomStr.match(/[①②③]/);
         if (circledMatch) {
             oncallNumber = circledMatch[0];
-            topStr = topStr.replace(/[①②③]/g, '');
+            // Remove from strings so they don't interfere with time parsing
+            topStr = topStr.replace(/[①②③]/g, ''); 
         }
         
-        if (topStr.includes('o/c') || bottomStr.includes('o/c')) {
+        // Handle o/c (On Call)
+        if (topStr.toLowerCase().includes('o/c') || bottomStr.toLowerCase().includes('o/c')) {
             isOncall = true;
-            topStr = topStr.replace(/o\/c/gi, '');
-            bottomStr = bottomStr.replace(/o\/c/gi, '');
         }
-        
+
+        // Handle i/c (In Charge - optional, just remove text to find time)
         topStr = topStr.replace(/i\/c/gi, '');
         bottomStr = bottomStr.replace(/i\/c/gi, '');
 
-        // Extract times
         let startTime = null;
         let endTime = null;
 
-        const startMatch = topStr.match(/(\d{4})/);
-        if (startMatch) {
-            startTime = startMatch[1];
-        }
-
-        const endMatch = bottomStr.match(/(\d{4})/);
-        if (endMatch) {
-            endTime = endMatch[1];
+        // SCENARIO 1: Combined format "0830-1700" in top cell (found in context)
+        // Look for 4 digits, separator, 4 digits
+        const combinedMatch = topStr.match(/(\d{4})\s*-\s*(\d{4})/);
+        
+        if (combinedMatch) {
+            startTime = combinedMatch[1];
+            endTime = combinedMatch[2];
+        } else {
+            // SCENARIO 2: Split format "0800-" (top) and "1700" (bottom)
+            const startMatch = topStr.match(/(\d{4})/);
+            const endMatch = bottomStr.match(/(\d{4})/);
+            
+            if (startMatch) startTime = startMatch[1];
+            if (endMatch) endTime = endMatch[1];
         }
 
         if (!startTime || !endTime) return null;
 
+        // Create Dates
         const startDate = new Date(date);
         const endDate = new Date(date);
-
+        
         startDate.setHours(parseInt(startTime.substr(0, 2)), parseInt(startTime.substr(2, 2)), 0, 0);
         endDate.setHours(parseInt(endTime.substr(0, 2)), parseInt(endTime.substr(2, 2)), 0, 0);
 
+        // Handle overnight shifts (end time is smaller than start time)
         if (endDate <= startDate) {
             endDate.setDate(endDate.getDate() + 1);
         }
 
-        let title = `${firstName}'s Shift: ${startTime}-${endTime}`;
+        // Build title
+        let title = `${firstName} Shift: ${startTime}-${endTime}`;
         if (isOncall || oncallNumber) {
             title += ` o/c${oncallNumber}`;
         }
@@ -719,7 +659,6 @@
     function createICSContent(events, fullName) {
         const now = new Date();
         const timestamp = formatDateICS(now);
-        
         let lines = [];
         lines.push('BEGIN:VCALENDAR');
         lines.push('VERSION:2.0');
@@ -728,10 +667,8 @@
         lines.push('METHOD:PUBLISH');
         lines.push(`X-WR-CALNAME:${fullName} Work Roster`);
         lines.push('X-WR-TIMEZONE:Australia/Brisbane');
-        
         events.forEach((ev, index) => {
             const uid = `${timestamp}-${index}@roster-importer.com`;
-            
             lines.push('BEGIN:VEVENT');
             lines.push(`UID:${uid}`);
             lines.push(`DTSTAMP:${timestamp}`);
@@ -743,12 +680,9 @@
             lines.push('SEQUENCE:0');
             lines.push('END:VEVENT');
         });
-        
         lines.push('END:VCALENDAR');
-        
         return lines.join('\r\n');
     }
-
     function formatDateICS(date) {
         const pad = (n) => n.toString().padStart(2, '0');
         return date.getUTCFullYear() +
@@ -758,17 +692,14 @@
                pad(date.getUTCMinutes()) +
                pad(date.getUTCSeconds()) + 'Z';
     }
-
     function escapeICS(text) {
         return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
     }
-
     function showStatus(msg, type) {
         const el = document.getElementById('status');
         el.textContent = msg;
         el.className = type;
         el.style.display = 'block';
-        
         if (type === 'success') {
             setTimeout(() => {
                 el.style.display = 'none';
@@ -776,6 +707,5 @@
         }
     }
 </script>
-
 </body>
 </html>
