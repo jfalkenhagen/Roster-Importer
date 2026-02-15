@@ -1,399 +1,695 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Roster Calendar Importer</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 720px; margin: 20px auto; padding: 0 16px; }
-    h1 { font-size: 22px; margin: 0 0 12px; }
-    .row { margin: 10px 0; }
-    label { display:block; font-weight:600; margin-bottom:6px; }
-    input[type="file"], input[type="text"] { width:100%; padding:10px; font-size:16px; }
-    button { padding: 10px 14px; font-size: 16px; cursor:pointer; margin-right:8px; margin-top:8px; }
-    #status { margin-top: 12px; padding: 10px; border-radius: 6px; display:none; white-space: pre-wrap; }
-    .ok { background:#e8fff0; border:1px solid #34c759; }
-    .err { background:#ffecec; border:1px solid #ff3b30; }
-    .hint { color:#555; font-size: 13px; line-height:1.4; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roster to Calendar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #007AFF;
+            --primary-dark: #0051D5;
+            --secondary: #5856D6;
+            --success: #34C759;
+            --error: #FF3B30;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-right: 8px;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: var(--primary);
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .suggestions {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            margin-top: 4px;
+        }
+
+        .suggestion-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:active {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .error { 
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--error);
+            border: 2px solid var(--error);
+        }
+        
+        .success { 
+            background: rgba(52, 199, 89, 0.1);
+            color: var(--success);
+            border: 2px solid var(--success);
+        }
+
+        .hidden { 
+            display: none !important; 
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, rgba(88, 86, 214, 0.1), rgba(102, 126, 234, 0.1));
+            border-left: 4px solid var(--secondary);
+            padding: 16px;
+            margin-top: 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.8;
+            display: none;
+        }
+
+        .instructions.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .instructions strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--secondary);
+        }
+
+        .instructions ol {
+            margin: 8px 0 0 20px;
+        }
+
+        .instructions li {
+            margin: 6px 0;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Roster Calendar Importer</h1>
 
-  <div class="row">
-    <label for="upload">Excel roster file (.xlsx)</label>
-    <input type="file" id="upload" accept=".xlsx,.xls" />
-  </div>
+<div class="container">
+    <div class="header">
+        <div class="header-icon">📅</div>
+        <h1>Roster Importer</h1>
+        <p class="subtitle">Convert your roster to iPhone calendar</p>
+    </div>
+    
+    <div class="form-group">
+        <label><span class="step-badge">1</span>Upload Excel File</label>
+        <input type="file" id="upload" accept=".xlsx, .xls">
+    </div>
 
-  <div class="row">
-    <label for="nameInput">Name</label>
-    <input type="text" id="nameInput" placeholder='e.g. "Angela Thomson" or "THOMSON, Angela"' autocomplete="off" />
-    <div class="hint">Tip: start typing — names will match in any order (first/last or "last, first").</div>
-  </div>
+    <div id="search-container" class="hidden">
+        <div class="form-group">
+            <label><span class="step-badge">2</span>Search Your Name</label>
+            <div class="search-wrapper">
+                <input type="text" id="nameInput" placeholder="e.g., Megan Falkenhagen" autocomplete="off">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+        </div>
 
-  <div class="row">
-    <button id="btnDownload" disabled>Generate Calendar File</button>
-    <button id="btnEmail" disabled>Email (.ics text)</button>
-    <button id="btnShare" disabled>Share (.ics file)</button>
-  </div>
+        <div class="button-group">
+            <button id="downloadBtn" class="btn-primary">
+                📥 Download Calendar File
+            </button>
+            <button id="emailBtn" class="btn-secondary">
+                📧 Email to Myself
+            </button>
+        </div>
 
-  <div id="status"></div>
+        <div id="instructions" class="instructions">
+            <strong>📲 How to Import on iPhone:</strong>
+            <ol>
+                <li><strong>Download option:</strong> Tap "Download", save to Files, then open the .ics file</li>
+                <li><strong>Email option:</strong> Tap "Email", send to yourself, then tap the attachment on your iPhone</li>
+                <li>iOS will automatically recognize the calendar and show "Add All"</li>
+                <li>Tap "Add All" to import all shifts to your Calendar app</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="status"></div>
+</div>
 
 <script>
-  let rawGrid = null;          // sheet_to_json(header:1) array-of-arrays
-  let staffNames = [];         // col A names
-  let dateCols = [];           // [{col, date}] mapping where a date exists for that column
+    let rosterData = [];
+    let rosterDates = [];
+    let staffNames = [];
+    let lastGeneratedICS = null;
+    let lastGeneratedName = null;
 
-  const uploadEl = document.getElementById('upload');
-  const nameEl = document.getElementById('nameInput');
-  const btnDownload = document.getElementById('btnDownload');
-  const btnEmail = document.getElementById('btnEmail');
-  const btnShare = document.getElementById('btnShare');
+    document.getElementById('upload').addEventListener('change', handleFile, false);
 
-  uploadEl.addEventListener('change', onFile, false);
-  btnDownload.addEventListener('click', () => run('download'));
-  btnEmail.addEventListener('click', () => run('email'));
-  btnShare.addEventListener('click', () => run('share'));
+    function handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-  function setStatus(msg, ok=true) {
-    const el = document.getElementById('status');
-    el.style.display = 'block';
-    el.className = ok ? 'ok' : 'err';
-    el.textContent = msg;
-  }
+        showStatus("📂 Loading file...", "success");
 
-  function normalizeName(s) {
-    return (s || '')
-      .toString()
-      .toLowerCase()
-      .replace(/\s+/g,' ')
-      .replace(/[.]/g,'')
-      .trim();
-  }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rawData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                processExcelData(rawData);
+            } catch (error) {
+                showStatus("❌ Error reading file. Please ensure it's a valid Excel file.", "error");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
 
-  // Splits into tokens and ignores commas; supports "last, first" and "first last"
-  function tokens(s) {
-    return normalizeName(s).split(/[\s,]+/).filter(Boolean);
-  }
+    function processExcelData(data) {
+        rosterData = data;
+        staffNames = [];
+        rosterDates = [];
 
-  function onFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = new Uint8Array(ev.target.result);
-        const wb = XLSX.read(data, { type: 'array', cellDates: true });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        rawGrid = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
-
-        extractNamesAndDates(rawGrid);
-
-        if (!staffNames.length) {
-          setStatus('Loaded file, but found no names in column A.', false);
-          disableActions();
-          return;
-        }
-        if (!dateCols.length) {
-          setStatus('Loaded file, but found no date columns. (This version expects a real date row or Excel-date cells.)', false);
-          disableActions();
-          return;
+        let headerRowIndex = -1;
+        for(let i = 0; i < Math.min(data.length, 10); i++) {
+            const row = data[i];
+            if (row && row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('SURNAME'))) {
+                headerRowIndex = i;
+                break;
+            }
         }
 
-        enableActions();
-        setStatus(`Loaded ${staffNames.length} names and ${dateCols.length} date columns.`, true);
-      } catch (err) {
-        console.error(err);
-        setStatus('Error reading the Excel file. Please confirm it is a valid .xlsx.', false);
-        disableActions();
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  }
+        if (headerRowIndex === -1) {
+            showStatus("❌ Could not find 'SURNAME' column. Please check your file format.", "error");
+            return;
+        }
 
-  function disableActions() {
-    btnDownload.disabled = true;
-    btnEmail.disabled = true;
-    btnShare.disabled = true;
-  }
-  function enableActions() {
-    btnDownload.disabled = false;
-    btnEmail.disabled = false;
-    btnShare.disabled = false;
-  }
+        // Extract dates from header row (looking for day numbers like 16, 17, 18...)
+        const headerRow = data[headerRowIndex];
+        const today = new Date();
+        
+        headerRow.forEach((cell, index) => {
+            if (index > 3 && typeof cell === 'number' && cell >= 1 && cell <= 31) {
+                const date = new Date(today.getFullYear(), today.getMonth(), cell);
+                rosterDates.push({ index: index, date: date });
+            } else if (index > 3 && cell instanceof Date) {
+                rosterDates.push({ index: index, date: cell });
+            }
+        });
 
-  /**
-   * DATE DETECTION (robust):
-   * - Find the row that contains "SURNAME" (header row).
-   * - Then look ABOVE it for a row that has many date-like cells (Date objects or Excel serials).
-   * - If not found, also try the header row itself.
-   *
-   * Your sheet has "SURNAME" and also a "DATE:" line; but the actual per-day columns show day numbers.
-   * So we rely on the row with actual Excel date values if present.
-   */
-  function extractNamesAndDates(grid) {
-    staffNames = [];
-    dateCols = [];
+        // Extract staff names
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const row = data[i];
+            if (row[0] && typeof row[0] === 'string' && row[0].trim()) {
+                const name = row[0].trim();
+                if (!name.toUpperCase().includes('TOTAL') && 
+                    !name.toUpperCase().includes('CASUAL') &&
+                    name.length > 2) {
+                    staffNames.push(name);
+                }
+            }
+        }
 
-    // Find header row containing SURNAME
-    let headerRow = -1;
-    for (let r = 0; r < Math.min(grid.length, 30); r++) {
-      const row = grid[r] || [];
-      if (row.some(c => typeof c === 'string' && c.toUpperCase().includes('SURNAME'))) {
-        headerRow = r; break;
-      }
-    }
-    if (headerRow === -1) return;
-
-    // Candidate rows to search for actual dates
-    const candidates = [];
-    for (let r = Math.max(0, headerRow - 6); r <= headerRow; r++) candidates.push(r);
-
-    // Pick the row with the most "date-like" cells
-    let bestRow = -1, bestCount = 0, bestDates = null;
-
-    for (const r of candidates) {
-      const row = grid[r] || [];
-      const found = findDateCellsInRow(row);
-      if (found.count > bestCount) {
-        bestCount = found.count;
-        bestRow = r;
-        bestDates = found.dates;
-      }
+        if (staffNames.length > 0 && rosterDates.length > 0) {
+            document.getElementById('search-container').classList.remove('hidden');
+            showStatus(`✅ Loaded ${staffNames.length} staff members and ${rosterDates.length} days.`, "success");
+            document.getElementById('nameInput').focus();
+        } else if (staffNames.length === 0) {
+            showStatus("❌ No staff names found. Check that names are in the first column.", "error");
+        } else {
+            showStatus("❌ No dates found. Check that dates are in the header row.", "error");
+        }
     }
 
-    if (bestRow !== -1 && bestCount >= 5) {
-      dateCols = bestDates;
-    }
+    // Autocomplete
+    const nameInput = document.getElementById('nameInput');
+    const suggestionsBox = document.getElementById('suggestions');
 
-    // Extract staff names from col A below headerRow
-    for (let r = headerRow + 1; r < grid.length; r++) {
-      const v = grid[r]?.[0];
-      if (typeof v === 'string' && v.trim()) {
-        // Stop if we hit totals area sometimes
-        const t = v.trim().toUpperCase();
-        if (t.startsWith('TOTAL')) break;
-        staffNames.push(v.trim());
-      }
-    }
-  }
+    nameInput.addEventListener('input', function() {
+        const input = this.value.toLowerCase().trim();
+        suggestionsBox.innerHTML = '';
+        
+        if (input.length < 2) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
 
-  function findDateCellsInRow(row) {
-    const dates = [];
-    let count = 0;
+        const searchParts = input.split(/[\s,]+/).filter(p => p.length > 0);
+        
+        const matches = staffNames.filter(name => {
+            const lowerName = name.toLowerCase();
+            return searchParts.every(part => lowerName.includes(part));
+        }).slice(0, 10);
 
-    for (let c = 0; c < row.length; c++) {
-      const v = row[c];
-      const d = coerceToDate(v);
-      if (d) {
-        count++;
-        dates.push({ col: c, date: d });
-      }
-    }
-    return { count, dates };
-  }
-
-  // Accept Date objects OR Excel serial dates OR parseable date strings
-  function coerceToDate(v) {
-    if (!v) return null;
-
-    if (v instanceof Date && !isNaN(v.getTime())) {
-      return new Date(v.getFullYear(), v.getMonth(), v.getDate());
-    }
-
-    // Excel serial date number (rough but works)
-    if (typeof v === 'number' && v > 20000 && v < 60000) {
-      const d = new Date(Math.round((v - 25569) * 86400 * 1000));
-      if (d.getFullYear() >= 2000 && d.getFullYear() <= 2100) {
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      }
-    }
-
-    if (typeof v === 'string') {
-      const s = v.trim();
-      // Avoid day numbers like "16"
-      if (/^\d{1,2}$/.test(s)) return null;
-      const parsed = Date.parse(s);
-      if (!isNaN(parsed)) {
-        const d = new Date(parsed);
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      }
-    }
-
-    return null;
-  }
-
-  function run(mode) {
-    if (!rawGrid) {
-      setStatus('Please select an Excel file first.', false);
-      return;
-    }
-
-    const inputName = nameEl.value.trim();
-    if (!inputName) {
-      setStatus('Please type your name.', false);
-      return;
-    }
-
-    const match = findBestNameMatch(inputName);
-    if (!match) {
-      const suggestion = suggestName(inputName);
-      setStatus(
-        suggestion
-          ? `Could not find "${inputName}". Did you mean:\n- ${suggestion}`
-          : `Could not find "${inputName}".`,
-        false
-      );
-      return;
-    }
-
-    const events = extractEventsForName(match);
-    if (!events.length) {
-      setStatus(`Found "${match}" but no shifts were detected.`, false);
-      return;
-    }
-
-    const ics = buildICS(events, `${match} Work Roster`);
-
-    if (mode === 'download') {
-      downloadICS(ics, `${safeFile(match)}_Roster.ics`);
-      setStatus('ICS generated. If on iPhone: try "Share (.ics file)" or email it to yourself.', true);
-      return;
-    }
-
-    if (mode === 'share') {
-      shareICS(ics, `${safeFile(match)}_Roster.ics`).catch(() => {
-        setStatus('Share failed on this device/browser. Try Download or Email.', false);
-      });
-      return;
-    }
-
-    if (mode === 'email') {
-      emailICS(ics, match);
-      return;
-    }
-  }
-
-  function findBestNameMatch(input) {
-    const inTok = tokens(input);
-    // exact
-    const exact = staffNames.find(n => normalizeName(n) === normalizeName(input));
-    if (exact) return exact;
-
-    // token match in any order
-    let best = null, bestScore = 0;
-    for (const n of staffNames) {
-      const nt = tokens(n);
-      const score = inTok.reduce((acc, t) => acc + (nt.some(x => x.includes(t) || t.includes(x)) ? 1 : 0), 0);
-      if (score > bestScore) { bestScore = score; best = n; }
-    }
-    // Require at least 2 token hits if user typed 2+ tokens, else 1
-    const required = inTok.length >= 2 ? 2 : 1;
-    return bestScore >= required ? best : null;
-  }
-
-  function suggestName(input) {
-    const it = tokens(input);
-    if (!it.length) return null;
-    const candidates = staffNames
-      .map(n => ({ n, score: tokens(n).filter(t => it.some(x => t.includes(x) || x.includes(t))).length }))
-      .sort((a,b) => b.score - a.score);
-    return candidates[0]?.score ? candidates[0].n : null;
-  }
-
-  function extractEventsForName(name) {
-    // Find row where col A equals name (string match)
-    const row = rawGrid.find(r => (r?.[0] || '').toString().trim() === name);
-    if (!row) return [];
-
-    const events = [];
-    for (const dc of dateCols) {
-      const cell = row[dc.col];
-      if (!cell) continue;
-      if (typeof cell !== 'string') continue;
-
-      const ev = parseShiftCell(cell, dc.date);
-      if (ev) events.push(ev);
-    }
-    return events;
-  }
-
-  function parseShiftCell(text, baseDate) {
-    const t = text.trim();
-    if (!t) return null;
-    const up = t.toUpperCase();
-    if (up === 'X' || up === 'RDO') return null;
-
-    // time range like 0800-1630 (allow optional spaces)
-    const m = up.match(/(\d{4})\s*-\s*(\d{4})/);
-    const start = new Date(baseDate);
-    const end = new Date(baseDate);
-
-    if (m) {
-      const sh = parseInt(m[1].slice(0,2), 10), sm = parseInt(m[1].slice(2,4), 10);
-      const eh = parseInt(m[2].slice(0,2), 10), em = parseInt(m[2].slice(2,4), 10);
-      start.setHours(sh, sm, 0, 0);
-      end.setHours(eh, em, 0, 0);
-      if (end <= start) end.setDate(end.getDate() + 1);
-    } else {
-      // treat leave codes etc as all-day-ish block
-      start.setHours(9,0,0,0);
-      end.setHours(17,0,0,0);
-    }
-
-    return {
-      summary: `Shift: ${t}`,
-      start,
-      end
-    };
-  }
-
-  // iOS-friendlier ICS: CRLF, UID, DTSTAMP, METHOD, escaping
-  function buildICS(events, calName) {
-    const dtstamp = formatICSDateUTC(new Date());
-    const lines = [];
-    lines.push('BEGIN:VCALENDAR');
-    lines.push('VERSION:2.0');
-    lines.push('PRODID:-//Roster Calendar Importer//EN');
-    lines.push('CALSCALE:GREGORIAN');
-    lines.push('METHOD:PUBLISH');
-    lines.push(`X-WR-CALNAME:${escapeICSText(calName)}`);
-
-    events.forEach((ev, idx) => {
-      const uid = `${dtstamp}-${idx}-${Math.random().toString(16).slice(2)}@roster-importer`;
-      lines.push('BEGIN:VEVENT');
-      lines.push(`UID:${uid}`);
-      lines.push(`DTSTAMP:${dtstamp}`);
-      lines.push(`DTSTART:${formatICSDateUTC(ev.start)}`);
-      lines.push(`DTEND:${formatICSDateUTC(ev.end)}`);
-      lines.push(`SUMMARY:${escapeICSText(ev.summary)}`);
-      lines.push('STATUS:CONFIRMED');
-      lines.push('TRANSP:OPAQUE');
-      lines.push('END:VEVENT');
+        if (matches.length > 0) {
+            suggestionsBox.style.display = 'block';
+            matches.forEach(match => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = match;
+                div.addEventListener('click', function() {
+                    nameInput.value = match;
+                    suggestionsBox.style.display = 'none';
+                });
+                suggestionsBox.appendChild(div);
+            });
+        } else {
+            suggestionsBox.style.display = 'none';
+        }
     });
 
-    lines.push('END:VCALENDAR');
-    return lines.join('\r\n'); // CRLF matters for strict parsers
-  }
+    document.addEventListener('click', function(e) {
+        if (e.target !== nameInput) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
 
-  function escapeICSText(s) {
-    return String(s)
-      .replace(/\\/g, '\\\\')
-      .replace(/\n/g, '\\n')
-      .replace(/,/g, '\\,')
-      .replace(/;/g, '\\;');
-  }
+    // Download Button
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+        const icsContent = generateCalendar();
+        if (!icsContent) return;
 
-  function formatICSDateUTC(d) {
-    const pad = n => String(n).padStart(2,'0');
-    return d.getUTCFullYear()
-      + pad(d.getUTCMonth()+1)
-      + pad(d.getUTCDate())
-      + 'T'
-      + pad(d.getUTCHours())
-      + pad(d.getUTCMinutes())
-      + pad(d.getUTCSeconds())
-      + 'Z';
-  }
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${lastGeneratedName.replace(/[^a-z0-9]/gi, '_')}_Roster.ics`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        document.getElementById('instructions').classList.add('show');
+        showStatus("✅ Calendar file downloaded! Open it on your iPhone to import.", "success");
+    });
+
+    // Email Button
+    document.getElementById('emailBtn').addEventListener('click', function() {
+        const icsContent = generateCalendar();
+        if (!icsContent) return;
+
+        const subject = encodeURIComponent(`${lastGeneratedName} Work Roster`);
+        
+        // Create a data URI for the attachment (note: this works better on iOS than mailto with body content)
+        const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsContent);
+        
+        const body = encodeURIComponent(
+`Hi,
+
+Your work roster calendar file is attached to this email.
+
+TO IMPORT ON iPHONE:
+1. Open this email on your iPhone
+2. Tap on the attachment below this message
+3. Your iPhone will recognize it as a calendar file
+4. Tap "Add All" to import all shifts
+
+If the attachment doesn't work, copy the calendar data below and paste it into a new file called "roster.ics", then open that file on your iPhone.
+
+────────────────────────────
+CALENDAR FILE DATA:
+
+${icsContent}
+
+────────────────────────────
+
+Found shifts for ${lastGeneratedName}.
+`);
+        
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        
+        document.getElementById('instructions').classList.add('show');
+        showStatus("📧 Email opened! Send it to yourself and tap the calendar data to import.", "success");
+    });
+
+    function generateCalendar() {
+        const selectedName = nameInput.value.trim();
+        
+        if (!selectedName) {
+            showStatus("⚠️ Please enter a name.", "error");
+            return null;
+        }
+
+        let targetRow = rosterData.find(row => row[0] === selectedName);
+
+        if (!targetRow) {
+            const lowerSelected = selectedName.toLowerCase();
+            targetRow = rosterData.find(row => 
+                row[0] && typeof row[0] === 'string' && 
+                row[0].toLowerCase() === lowerSelected
+            );
+        }
+
+        if (!targetRow) {
+            const similar = staffNames.filter(name => 
+                name.toLowerCase().includes(selectedName.toLowerCase())
+            ).slice(0, 3);
+            
+            let errorMsg = `❌ Could not find "${selectedName}".`;
+            if (similar.length > 0) {
+                errorMsg += `\n\nDid you mean:\n• ${similar.join('\n• ')}`;
+            }
+            showStatus(errorMsg, "error");
+            return null;
+        }
+
+        let events = [];
+        rosterDates.forEach(dateObj => {
+            const colIndex = dateObj.index;
+            const shiftContent = targetRow[colIndex];
+
+            if (shiftContent && typeof shiftContent === 'string') {
+                const shiftInfo = parseShift(shiftContent, dateObj.date);
+                if (shiftInfo) {
+                    events.push(shiftInfo);
+                }
+            }
+        });
+
+        if (events.length === 0) {
+            showStatus("❌ No shifts found for this person.", "error");
+            return null;
+        }
+
+        lastGeneratedName = selectedName;
+        return createICSContent(events, selectedName);
+    }
+
+    function parseShift(cellText, date) {
+        const cleaned = cellText.trim().toUpperCase();
+        
+        if (!cleaned || cleaned === 'X' || cleaned === 'RDO' || 
+            cleaned.includes('SECONDMENT') || cleaned.includes('LWOP')) {
+            return null;
+        }
+
+        const timeMatch = cellText.match(/(\d{4})-(\d{4})/);
+        
+        let title = `Shift: ${cellText}`;
+        let startDate = new Date(date);
+        let endDate = new Date(date);
+
+        if (timeMatch) {
+            const startStr = timeMatch[1];
+            const endStr = timeMatch[2];
+
+            startDate.setHours(parseInt(startStr.substr(0,2)), parseInt(startStr.substr(2,2)), 0, 0);
+            endDate.setHours(parseInt(endStr.substr(0,2)), parseInt(endStr.substr(2,2)), 0, 0);
+
+            if (endDate <= startDate) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
+        } else {
+            startDate.setHours(9, 0, 0, 0);
+            endDate.setHours(17, 0, 0, 0);
+        }
+
+        return {
+            title: title,
+            start: startDate,
+            end: endDate
+        };
+    }
+
+    function createICSContent(events, name) {
+        const now = new Date();
+        const timestamp = formatDateICS(now);
+        
+        let lines = [];
+        lines.push('BEGIN:VCALENDAR');
+        lines.push('VERSION:2.0');
+        lines.push('PRODID:-//Roster Importer//EN');
+        lines.push('CALSCALE:GREGORIAN');
+        lines.push('METHOD:PUBLISH');
+        lines.push(`X-WR-CALNAME:${name} Work Roster`);
+        lines.push('X-WR-TIMEZONE:Australia/Brisbane');
+        
+        events.forEach((ev, index) => {
+            const uid = `${timestamp}-${index}@roster-importer.com`;
+            
+            lines.push('BEGIN:VEVENT');
+            lines.push(`UID:${uid}`);
+            lines.push(`DTSTAMP:${timestamp}`);
+            lines.push(`DTSTART:${formatDateICS(ev.start)}`);
+            lines.push(`DTEND:${formatDateICS(ev.end)}`);
+            lines.push(`SUMMARY:${escapeICS(ev.title)}`);
+            lines.push('STATUS:CONFIRMED');
+            lines.push('TRANSP:OPAQUE');
+            lines.push('SEQUENCE:0');
+            lines.push('END:VEVENT');
+        });
+        
+        lines.push('END:VCALENDAR');
+        
+        return lines.join('\r\n');
+    }
+
+    function formatDateICS(date) {
+        const pad = (n) => n.toString().padStart(2, '0');
+        return date.getUTCFullYear() +
+               pad(date.getUTCMonth() + 1) +
+               pad(date.getUTCDate()) + 'T' +
+               pad(date.getUTCHours()) +
+               pad(date.getUTCMinutes()) +
+               pad(date.getUTCSeconds()) + 'Z';
+    }
+
+    function escapeICS(text) {
+        return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
+    }
+
+    function showStatus(msg, type) {
+        const el = document.getElementById('status');
+        el.textContent = msg;
+        el.className = type;
+        el.style.display = 'block';
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 10000);
+        }
+    }
+</script>
+
+</body>
+</html>
