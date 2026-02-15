@@ -279,20 +279,6 @@
             margin: 6px 0;
         }
 
-        .loader {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         .search-wrapper {
             position: relative;
         }
@@ -335,18 +321,17 @@
             <button id="downloadBtn" class="btn-primary">
                 📥 Download Calendar File
             </button>
-            <button id="emailBtn" class="btn-secondary">
-                📧 Email to Myself
+            <button id="shareBtn" class="btn-secondary">
+                📤 Share/Email File
             </button>
         </div>
 
         <div id="instructions" class="instructions">
-            <strong>📲 How to Import on iPhone:</strong>
+            <strong>📲 To Import on iPhone:</strong>
             <ol>
-                <li><strong>Download option:</strong> Tap "Download", save to Files, then open the .ics file</li>
-                <li><strong>Email option:</strong> Tap "Email", send to yourself, then tap the attachment on your iPhone</li>
-                <li>iOS will automatically recognize the calendar and show "Add All"</li>
-                <li>Tap "Add All" to import all shifts to your Calendar app</li>
+                <li><strong>Download method:</strong> Tap "Download", save to Files app, then open the .ics file from Files</li>
+                <li><strong>Share method:</strong> Tap "Share/Email", choose Mail, send to yourself, then open the email and tap the attachment</li>
+                <li>iOS will show "Add All" - tap it to import shifts to your Calendar</li>
             </ol>
         </div>
     </div>
@@ -356,8 +341,8 @@
 
 <script>
     let rosterData = [];
-    let rosterDates = [];
-    let staffNames = [];
+    let staffList = []; // Array of {fullName, firstName, rowIndex}
+    let shiftDates = []; // Array of {colIndex, date}
     let lastGeneratedICS = null;
     let lastGeneratedName = null;
 
@@ -378,7 +363,7 @@
                 const rawData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
                 processExcelData(rawData);
             } catch (error) {
-                showStatus("❌ Error reading file. Please ensure it's a valid Excel file.", "error");
+                showStatus("❌ Error reading file: " + error.message, "error");
             }
         };
         reader.readAsArrayBuffer(file);
@@ -386,57 +371,79 @@
 
     function processExcelData(data) {
         rosterData = data;
-        staffNames = [];
-        rosterDates = [];
+        staffList = [];
+        shiftDates = [];
 
-        let headerRowIndex = -1;
-        for(let i = 0; i < Math.min(data.length, 10); i++) {
-            const row = data[i];
-            if (row && row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('SURNAME'))) {
-                headerRowIndex = i;
-                break;
+        // Find week starting date in F5 (row index 4, col index 5)
+        let weekStart = null;
+        if (data[4] && data[4][5]) {
+            const cellValue = data[4][5];
+            if (typeof cellValue === 'string' && cellValue.includes('DATE:')) {
+                const dateStr = cellValue.split('DATE:')[1].trim();
+                weekStart = new Date(dateStr);
+            } else if (cellValue instanceof Date) {
+                weekStart = cellValue;
             }
         }
 
-        if (headerRowIndex === -1) {
-            showStatus("❌ Could not find 'SURNAME' column. Please check your file format.", "error");
+        if (!weekStart || isNaN(weekStart)) {
+            showStatus("❌ Could not find week starting date in cell F5.", "error");
             return;
         }
 
-        // Extract dates from header row (looking for day numbers like 16, 17, 18...)
-        const headerRow = data[headerRowIndex];
-        const today = new Date();
+        // Find dates in row 7 (index 6), starting from column E (index 4)
+        // Row 7 contains day numbers like 16, 17, 18, etc.
+        const dateRow = data[6]; // Row 7 (0-indexed as 6)
         
-        headerRow.forEach((cell, index) => {
-            if (index > 3 && typeof cell === 'number' && cell >= 1 && cell <= 31) {
-                const date = new Date(today.getFullYear(), today.getMonth(), cell);
-                rosterDates.push({ index: index, date: date });
-            } else if (index > 3 && cell instanceof Date) {
-                rosterDates.push({ index: index, date: cell });
+        for (let colIndex = 4; colIndex < dateRow.length; colIndex++) {
+            const cell = dateRow[colIndex];
+            if (typeof cell === 'number' && cell >= 1 && cell <= 31) {
+                // Create date using the day number
+                const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), cell);
+                shiftDates.push({ colIndex: colIndex, date: date });
             }
-        });
+        }
 
-        // Extract staff names
-        for (let i = headerRowIndex + 1; i < data.length; i++) {
-            const row = data[i];
-            if (row[0] && typeof row[0] === 'string' && row[0].trim()) {
-                const name = row[0].trim();
-                if (!name.toUpperCase().includes('TOTAL') && 
-                    !name.toUpperCase().includes('CASUAL') &&
-                    name.length > 2) {
-                    staffNames.push(name);
+        if (shiftDates.length === 0) {
+            showStatus("❌ No dates found in row 7. Please check file format.", "error");
+            return;
+        }
+
+        // Find staff names - look for rows with "SURNAME, Firstname" pattern
+        // Each person has 2 rows: position in first row, shifts split across the two rows
+        for (let rowIndex = 7; rowIndex < data.length; rowIndex++) {
+            const row = data[rowIndex];
+            const nameCell = row[0]; // Column A
+            
+            if (nameCell && typeof nameCell === 'string') {
+                // Check if it matches "SURNAME, Firstname" pattern
+                if (nameCell.includes(',')) {
+                    const parts = nameCell.split(',');
+                    if (parts.length >= 2) {
+                        const surname = parts[0].trim();
+                        const firstname = parts[1].trim().split(/\s+/)[0]; // Get first word of first name
+                        
+                        // Skip header-like entries
+                        if (!surname.toUpperCase().includes('TOTAL') && 
+                            !surname.toUpperCase().includes('SURNAME') &&
+                            surname.length > 1 && firstname.length > 0) {
+                            staffList.push({
+                                fullName: nameCell,
+                                firstName: firstname,
+                                rowIndex: rowIndex
+                            });
+                        }
+                    }
                 }
             }
         }
 
-        if (staffNames.length > 0 && rosterDates.length > 0) {
+        if (staffList.length > 0) {
             document.getElementById('search-container').classList.remove('hidden');
-            showStatus(`✅ Loaded ${staffNames.length} staff members and ${rosterDates.length} days.`, "success");
+            showStatus(`✅ Loaded ${staffList.length} staff members and ${shiftDates.length} days.`, "success");
             document.getElementById('nameInput').focus();
-        } else if (staffNames.length === 0) {
-            showStatus("❌ No staff names found. Check that names are in the first column.", "error");
         } else {
-            showStatus("❌ No dates found. Check that dates are in the header row.", "error");
+            showStatus("❌ No staff names found. Check that names are in format 'SURNAME, Firstname'.", "error");
         }
     }
 
@@ -453,21 +460,19 @@
             return;
         }
 
-        const searchParts = input.split(/[\s,]+/).filter(p => p.length > 0);
-        
-        const matches = staffNames.filter(name => {
-            const lowerName = name.toLowerCase();
-            return searchParts.every(part => lowerName.includes(part));
+        const matches = staffList.filter(staff => {
+            return staff.fullName.toLowerCase().includes(input) ||
+                   staff.firstName.toLowerCase().includes(input);
         }).slice(0, 10);
 
         if (matches.length > 0) {
             suggestionsBox.style.display = 'block';
-            matches.forEach(match => {
+            matches.forEach(staff => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
-                div.textContent = match;
+                div.textContent = staff.fullName;
                 div.addEventListener('click', function() {
-                    nameInput.value = match;
+                    nameInput.value = staff.fullName;
                     suggestionsBox.style.display = 'none';
                 });
                 suggestionsBox.appendChild(div);
@@ -485,60 +490,61 @@
 
     // Download Button
     document.getElementById('downloadBtn').addEventListener('click', function() {
-        const icsContent = generateCalendar();
-        if (!icsContent) return;
+        const result = generateCalendar();
+        if (!result) return;
 
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${lastGeneratedName.replace(/[^a-z0-9]/gi, '_')}_Roster.ics`;
+        a.download = `${result.firstName}_Roster.ics`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
         document.getElementById('instructions').classList.add('show');
-        showStatus("✅ Calendar file downloaded! Open it on your iPhone to import.", "success");
+        showStatus("✅ Calendar file downloaded! Save to Files, then tap to open in Calendar.", "success");
     });
 
-    // Email Button
-    document.getElementById('emailBtn').addEventListener('click', function() {
-        const icsContent = generateCalendar();
-        if (!icsContent) return;
+    // Share/Email Button (uses Web Share API)
+    document.getElementById('shareBtn').addEventListener('click', function() {
+        const result = generateCalendar();
+        if (!result) return;
 
-        const subject = encodeURIComponent(`${lastGeneratedName} Work Roster`);
-        
-        // Create a data URI for the attachment (note: this works better on iOS than mailto with body content)
-        const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsContent);
-        
-        const body = encodeURIComponent(
-`Hi,
+        const file = new File(
+            [result.icsContent], 
+            `${result.firstName}_Roster.ics`, 
+            { type: 'text/calendar' }
+        );
 
-Your work roster calendar file is attached to this email.
-
-TO IMPORT ON iPHONE:
-1. Open this email on your iPhone
-2. Tap on the attachment below this message
-3. Your iPhone will recognize it as a calendar file
-4. Tap "Add All" to import all shifts
-
-If the attachment doesn't work, copy the calendar data below and paste it into a new file called "roster.ics", then open that file on your iPhone.
-
-────────────────────────────
-CALENDAR FILE DATA:
-
-${icsContent}
-
-────────────────────────────
-
-Found shifts for ${lastGeneratedName}.
-`);
-        
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        
-        document.getElementById('instructions').classList.add('show');
-        showStatus("📧 Email opened! Send it to yourself and tap the calendar data to import.", "success");
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+                title: `${result.firstName}'s Work Roster`,
+                text: `Roster calendar for ${result.fullName}`,
+                files: [file]
+            }).then(() => {
+                document.getElementById('instructions').classList.add('show');
+                showStatus("✅ File shared! Choose Mail to email it to yourself.", "success");
+            }).catch((err) => {
+                if (err.name !== 'AbortError') {
+                    showStatus("❌ Share failed. Try the Download button instead.", "error");
+                }
+            });
+        } else {
+            // Fallback: Download
+            const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${result.firstName}_Roster.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showStatus("✅ File downloaded (Share not supported on this browser).", "success");
+        }
     });
 
     function generateCalendar() {
@@ -549,39 +555,40 @@ Found shifts for ${lastGeneratedName}.
             return null;
         }
 
-        let targetRow = rosterData.find(row => row[0] === selectedName);
+        const staff = staffList.find(s => 
+            s.fullName.toLowerCase() === selectedName.toLowerCase()
+        );
 
-        if (!targetRow) {
-            const lowerSelected = selectedName.toLowerCase();
-            targetRow = rosterData.find(row => 
-                row[0] && typeof row[0] === 'string' && 
-                row[0].toLowerCase() === lowerSelected
-            );
-        }
-
-        if (!targetRow) {
-            const similar = staffNames.filter(name => 
-                name.toLowerCase().includes(selectedName.toLowerCase())
+        if (!staff) {
+            const similar = staffList.filter(s => 
+                s.fullName.toLowerCase().includes(selectedName.toLowerCase())
             ).slice(0, 3);
             
             let errorMsg = `❌ Could not find "${selectedName}".`;
             if (similar.length > 0) {
-                errorMsg += `\n\nDid you mean:\n• ${similar.join('\n• ')}`;
+                errorMsg += `\n\nDid you mean:\n• ${similar.map(s => s.fullName).join('\n• ')}`;
             }
             showStatus(errorMsg, "error");
             return null;
         }
 
-        let events = [];
-        rosterDates.forEach(dateObj => {
-            const colIndex = dateObj.index;
-            const shiftContent = targetRow[colIndex];
+        // Parse shifts for this person
+        // Shifts are split across current row and next row
+        const topRow = rosterData[staff.rowIndex]; // Row with start times
+        const bottomRow = rosterData[staff.rowIndex + 1]; // Row with end times
 
-            if (shiftContent && typeof shiftContent === 'string') {
-                const shiftInfo = parseShift(shiftContent, dateObj.date);
-                if (shiftInfo) {
-                    events.push(shiftInfo);
-                }
+        let events = [];
+
+        shiftDates.forEach(dateInfo => {
+            const colIndex = dateInfo.colIndex;
+            const date = dateInfo.date;
+            
+            const topCell = topRow[colIndex];
+            const bottomCell = bottomRow[colIndex];
+
+            const shiftInfo = parseShift(topCell, bottomCell, date, staff.firstName);
+            if (shiftInfo) {
+                events.push(shiftInfo);
             }
         });
 
@@ -590,37 +597,85 @@ Found shifts for ${lastGeneratedName}.
             return null;
         }
 
-        lastGeneratedName = selectedName;
-        return createICSContent(events, selectedName);
+        return {
+            icsContent: createICSContent(events, staff.fullName),
+            firstName: staff.firstName,
+            fullName: staff.fullName
+        };
     }
 
-    function parseShift(cellText, date) {
-        const cleaned = cellText.trim().toUpperCase();
+    function parseShift(topCell, bottomCell, date, firstName) {
+        if (!topCell && !bottomCell) return null;
         
-        if (!cleaned || cleaned === 'X' || cleaned === 'RDO' || 
-            cleaned.includes('SECONDMENT') || cleaned.includes('LWOP')) {
+        let topStr = typeof topCell === 'string' ? topCell.trim() : '';
+        let bottomStr = typeof bottomCell === 'string' ? bottomCell.trim() : '';
+        
+        // Skip non-work indicators
+        if (topStr.toUpperCase() === 'X' || topStr.toUpperCase() === 'RDO' ||
+            topStr.includes('SECONDMENT') || topStr.includes('LWOP') ||
+            topStr.includes('A/L') || topStr.includes('ML') ||
+            topStr.toUpperCase() === 'C') {
             return null;
         }
 
-        const timeMatch = cellText.match(/(\d{4})-(\d{4})/);
+        // Extract circled number and o/c notation
+        let oncallNumber = '';
+        let isOncall = false;
         
-        let title = `Shift: ${cellText}`;
-        let startDate = new Date(date);
-        let endDate = new Date(date);
+        // Check for circled numbers (①, ②, ③)
+        const circledMatch = topStr.match(/[①②③]/);
+        if (circledMatch) {
+            oncallNumber = circledMatch[0];
+            topStr = topStr.replace(/[①②③]/g, '');
+        }
+        
+        // Check for o/c
+        if (topStr.includes('o/c') || bottomStr.includes('o/c')) {
+            isOncall = true;
+            topStr = topStr.replace(/o\/c/gi, '');
+            bottomStr = bottomStr.replace(/o\/c/gi, '');
+        }
+        
+        // Remove i/c notation
+        topStr = topStr.replace(/i\/c/gi, '');
+        bottomStr = bottomStr.replace(/i\/c/gi, '');
 
-        if (timeMatch) {
-            const startStr = timeMatch[1];
-            const endStr = timeMatch[2];
+        // Extract times
+        // Top cell format: "0800-" or "0800" or "1230-"
+        // Bottom cell format: "1630" or "1700" or "2100"
+        let startTime = null;
+        let endTime = null;
 
-            startDate.setHours(parseInt(startStr.substr(0,2)), parseInt(startStr.substr(2,2)), 0, 0);
-            endDate.setHours(parseInt(endStr.substr(0,2)), parseInt(endStr.substr(2,2)), 0, 0);
+        // Extract start time from top cell
+        const startMatch = topStr.match(/(\d{4})/);
+        if (startMatch) {
+            startTime = startMatch[1];
+        }
 
-            if (endDate <= startDate) {
-                endDate.setDate(endDate.getDate() + 1);
-            }
-        } else {
-            startDate.setHours(9, 0, 0, 0);
-            endDate.setHours(17, 0, 0, 0);
+        // Extract end time from bottom cell
+        const endMatch = bottomStr.match(/(\d{4})/);
+        if (endMatch) {
+            endTime = endMatch[1];
+        }
+
+        if (!startTime || !endTime) return null;
+
+        // Create event
+        const startDate = new Date(date);
+        const endDate = new Date(date);
+
+        startDate.setHours(parseInt(startTime.substr(0, 2)), parseInt(startTime.substr(2, 2)), 0, 0);
+        endDate.setHours(parseInt(endTime.substr(0, 2)), parseInt(endTime.substr(2, 2)), 0, 0);
+
+        // Handle overnight shifts
+        if (endDate <= startDate) {
+            endDate.setDate(endDate.getDate() + 1);
+        }
+
+        // Build title
+        let title = `${firstName}'s Shift: ${startTime}-${endTime}`;
+        if (isOncall || oncallNumber) {
+            title += ` o/c${oncallNumber}`;
         }
 
         return {
@@ -630,7 +685,7 @@ Found shifts for ${lastGeneratedName}.
         };
     }
 
-    function createICSContent(events, name) {
+    function createICSContent(events, fullName) {
         const now = new Date();
         const timestamp = formatDateICS(now);
         
@@ -640,7 +695,7 @@ Found shifts for ${lastGeneratedName}.
         lines.push('PRODID:-//Roster Importer//EN');
         lines.push('CALSCALE:GREGORIAN');
         lines.push('METHOD:PUBLISH');
-        lines.push(`X-WR-CALNAME:${name} Work Roster`);
+        lines.push(`X-WR-CALNAME:${fullName} Work Roster`);
         lines.push('X-WR-TIMEZONE:Australia/Brisbane');
         
         events.forEach((ev, index) => {
