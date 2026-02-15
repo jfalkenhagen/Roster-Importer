@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Roster Calendar">
+    <title>Roster Calendar Importer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 25px 20px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: #f7f7f7;
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .file-upload-btn:active {
+            transform: scale(0.98);
+        }
+
+        .file-upload-btn.has-file {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 14px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:active {
+            background: #667eea;
+            color: white;
+        }
+
+        .autocomplete-item .name-primary {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .autocomplete-item .name-secondary {
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #1565c0;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .suggestion {
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .suggestion-name {
+            display: inline-block;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-top: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .instructions {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .instructions h3 {
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            input, button {
+                -webkit-appearance: none;
+                border-radius: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Roster Calendar</h1>
+            <p>Import your shifts to calendar</p>
+        </div>
+        
+        <div class="content">
+            <div class="alert alert-error" id="errorAlert"></div>
+            <div class="alert alert-success" id="successAlert"></div>
+            <div class="alert alert-info" id="infoAlert"></div>
+            
+            <div class="form-group">
+                <label for="fileInput">1. Select Roster File (.xlsx)</label>
+                <input type="file" id="fileInput" accept=".xlsx">
+                <label for="fileInput" class="file-upload-btn" id="fileUploadLabel">
+                    📎 Choose Excel File
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="nameInput">2. Enter Your Name</label>
+                <div class="input-wrapper">
+                    <input type="text" 
+                           id="nameInput" 
+                           placeholder="e.g., Megan Falkenhagen or Falkenhagen, Megan"
+                           autocomplete="off">
+                    <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                </div>
+            </div>
+
+            <button class="generate-btn" id="generateBtn" disabled>
+                Generate Calendar File
+            </button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+
+            <div class="instructions">
+                <h3>📱 How to Use on iPhone:</h3>
+                <ol>
+                    <li>Save this HTML file to iCloud Drive or Files app</li>
+                    <li>Open it in Safari browser</li>
+                    <li>Upload your roster Excel file</li>
+                    <li>Type your name (suggestions will appear)</li>
+                    <li>Tap "Generate Calendar File"</li>
+                    <li>Open the downloaded .ics file to add to Calendar</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include SheetJS library -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <script>
+        // Global variables
+        let workbook = null;
+        let employeeNames = [];
+        let selectedName = '';
+
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadLabel = document.getElementById('fileUploadLabel');
+        const nameInput = document.getElementById('nameInput');
+        const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+        const generateBtn = document.getElementById('generateBtn');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        const infoAlert = document.getElementById('infoAlert');
+        const loading = document.getElementById('loading');
+
+        // Show alert function
+        function showAlert(type, message, suggestion = null) {
+            hideAllAlerts();
+            const alert = type === 'error' ? errorAlert : type === 'success' ? successAlert : infoAlert;
+            
+            let content = `<strong>${type === 'error' ? '❌ Error' : type === 'success' ? '✅ Success' : 'ℹ️ Info'}</strong>${message}`;
+            
+            if (suggestion) {
+                content += `<div class="suggestion">Did you mean: <span class="suggestion-name" onclick="selectSuggestion('${suggestion}')">${suggestion}</span></div>`;
+            }
+            
+            alert.innerHTML = content;
+            alert.classList.add('show');
+            
+            // Auto-hide success messages
+            if (type === 'success') {
+                setTimeout(() => alert.classList.remove('show'), 5000);
+            }
+        }
+
+        function hideAllAlerts() {
+            errorAlert.classList.remove('show');
+            successAlert.classList.remove('show');
+            infoAlert.classList.remove('show');
+        }
+
+        function selectSuggestion(name) {
+            nameInput.value = name;
+            selectedName = name;
+            hideAllAlerts();
+            checkFormReady();
+        }
+
+        // Levenshtein distance for fuzzy matching
+        function levenshteinDistance(str1, str2) {
+            const m = str1.length;
+            const n = str2.length;
+            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (str1[i - 1].toLowerCase() === str2[j - 1].toLowerCase()) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = Math.min(
+                            dp[i - 1][j - 1] + 1,
+                            dp[i][j - 1] + 1,
+                            dp[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return dp[m][n];
+        }
+
+        // Find closest name match
+        function findClosestMatch(input) {
+            if (!input || input.length < 2) return null;
+            
+            const inputLower = input.toLowerCase();
+            let bestMatch = null;
+            let bestScore = Infinity;
+
+            employeeNames.forEach(name => {
+                const distance = levenshteinDistance(input, name);
+                const similarity = distance / Math.max(input.length, name.length);
+                
+                if (similarity < 0.4 && distance < bestScore) {
+                    bestScore = distance;
+                    bestMatch = name;
+                }
+            });
+
+            return bestMatch;
+        }
+
+        // Normalize name formats
+        function normalizeNameFormats(input) {
+            const formats = [];
+            const cleaned = input.trim();
+            
+            // Original input
+            formats.push(cleaned);
+            
+            // Handle "Lastname, Firstname" format
+            if (cleaned.includes(',')) {
+                const parts = cleaned.split(',').map(p => p.trim());
+                if (parts.length === 2) {
+                    // Convert to "Firstname Lastname"
+                    formats.push(`${parts[1]} ${parts[0]}`);
+                    // Try uppercase
+                    formats.push(`${parts[0].toUpperCase()}, ${parts[1]}`);
+                }
+            } else {
+                // Handle "Firstname Lastname" format
+                const parts = cleaned.split(' ').filter(p => p);
+                if (parts.length >= 2) {
+                    // Convert to "Lastname, Firstname"
+                    formats.push(`${parts[parts.length - 1]}, ${parts.slice(0, -1).join(' ')}`);
+                    // Try uppercase
+                    formats.push(`${parts[parts.length - 1].toUpperCase()}, ${parts.slice(0, -1).join(' ')}`);
+                }
+            }
+            
+            return formats;
+        }
+
+        // File input handler
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.xlsx')) {
+                showAlert('error', 'Please select a valid Excel file (.xlsx)');
+                return;
+            }
+
+            loading.classList.add('show');
+            hideAllAlerts();
+
+            try {
+                const data = await file.arrayBuffer();
+                workbook = XLSX.read(data, { type: 'array' });
+                
+                // Extract employee names from the first sheet
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                
+                employeeNames = [];
+                // Look for names in the spreadsheet (adjust column index as needed)
+                jsonData.forEach(row => {
+                    if (row[0] && typeof row[0] === 'string' && row[0].includes(',')) {
+                        employeeNames.push(row[0].trim());
+                    }
+                });
+
+                if (employeeNames.length === 0) {
+                    showAlert('error', 'No employee names found in the roster file. Please check the file format.');
+                    workbook = null;
+                } else {
+                    fileUploadLabel.textContent = `✓ ${file.name}`;
+                    fileUploadLabel.classList.add('has-file');
+                    showAlert('success', `File loaded successfully! Found ${employeeNames.length} employees.`);
+                    checkFormReady();
+                }
+            } catch (error) {
+                showAlert('error', `Failed to read file: ${error.message}`);
+                workbook = null;
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        // Autocomplete functionality
+        nameInput.addEventListener('input', (e) => {
+            const input = e.target.value;
+            
+            if (input.length < 3) {
+                autocompleteDropdown.classList.remove('show');
+                autocompleteDropdown.innerHTML = '';
+                selectedName = '';
+                checkFormReady();
+                return;
+            }
+
+            if (employeeNames.length === 0) {
+                showAlert('error', 'Please upload a roster file first.');
+                return;
+            }
+
+            // Search for matching names
+            const inputLower = input.toLowerCase();
+            const matches = employeeNames.filter(name => {
+                const nameLower = name.toLowerCase();
+                const formats = normalizeNameFormats(name);
+                
+                return nameLower.includes(inputLower) || 
+                       formats.some(f => f.toLowerCase().includes(inputLower));
+            }).slice(0, 8); // Limit to 8 results
+
+            if (matches.length > 0) {
+                autocompleteDropdown.innerHTML = matches.map(name => {
+                    const parts = name.split(',');
+                    const lastName = parts[0].trim();
+                    const firstName = parts[1] ? parts[1].trim() : '';
+                    
+                    return `
+                        <div class="autocomplete-item" data-name="${name}">
+                            <div class="name-primary">${lastName}${firstName ? ',' : ''} ${firstName}</div>
+                            ${firstName ? `<div class="name-secondary">${firstName} ${lastName}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+                autocompleteDropdown.classList.add('show');
+            } else {
+                autocompleteDropdown.classList.remove('show');
+            }
+            
+            selectedName = '';
+            checkFormReady();
+        });
+
+        // Autocomplete item click handler
+        autocompleteDropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.autocomplete-item');
+            if (item) {
+                const name = item.dataset.name;
+                nameInput.value = name;
+                selectedName = name;
+                autocompleteDropdown.classList.remove('show');
+                hideAllAlerts();
+                checkFormReady();
+            }
+        });
+
+        // Close autocomplete when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.input-wrapper')) {
+                autocompleteDropdown.classList.remove('show');
+            }
+        });
+
+        // Check if form is ready
+        function checkFormReady() {
+            generateBtn.disabled = !(workbook && (selectedName || nameInput.value.length > 0));
+        }
+
+        // Generate calendar file
+        generateBtn.addEventListener('click', async () => {
+            hideAllAlerts();
+            
+            if (!workbook) {
+                showAlert('error', 'Please upload a roster file first.');
+                return;
+            }
+
+            const inputName = nameInput.value.trim();
+            if (!inputName) {
+                showAlert('error', 'Please enter your name.');
+                return;
+            }
+
+            loading.classList.add('show');
+
+            try {
+                // Try to find exact match first
+                const formats = normalizeNameFormats(inputName);
+                let matchedName = null;
+
+                for (const format of formats) {
+                    matchedName = employeeNames.find(name => 
+                        name.toLowerCase() === format.toLowerCase()
+                    );
+                    if (matchedName) break;
+                }
+
+                // If no exact match, try fuzzy matching
+                if (!matchedName) {
+                    const closestMatch = findClosestMatch(inputName);
+                    
+                    if (closestMatch) {
+                        loading.classList.remove('show');
+                        showAlert('error', `Name "${inputName}" not found in roster.`, closestMatch);
+                        return;
+                    } else {
+                        loading.classList.remove('show');
+                        showAlert('error', `Name "${inputName}" not found in roster. Please check spelling or select from suggestions.`);
+                        return;
+                    }
+                }
+
+                // Process roster data and generate calendar
+                // This is where you'd add your calendar generation logic
+                // For now, showing a success message
+                const icsContent = generateICSFile(matchedName);
+                downloadICS(icsContent, `${matchedName.replace(/[^a-zA-Z0-9]/g, '_')}_roster.ics`);
+                
+                loading.classList.remove('show');
+                showAlert('success', `Calendar file generated for ${matchedName}! The file should download automatically. Open it to add shifts to your calendar.`);
+                
+            } catch (error) {
+                loading.classList.remove('show');
+                showAlert('error', `An error occurred: ${error.message}`);
+            }
+        });
+
+        // Generate ICS file content
+        function generateICSFile(employeeName) {
+            // This is a basic ICS template - you'll need to customize based on your roster data
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            
+            let icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Roster Calendar//EN',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
+                'X-WR-CALNAME:Work Roster - ' + employeeName,
+                'X-WR-TIMEZONE:Australia/Brisbane',
+                ''
+            ];
+
+            // Extract shift data from workbook for this employee
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            
+            // Find employee row and process shifts
+            // This is simplified - you'll need to adapt to your actual roster structure
+            let employeeRow = null;
+            jsonData.forEach((row, index) => {
+                if (row[0] && row[0].toString().toLowerCase() === employeeName.toLowerCase()) {
+                    employeeRow = row;
+                }
+            });
+
+            if (employeeRow) {
+                // Process shifts from the row
+                // This is where you'd parse the shift data and create calendar events
+                // For demonstration, creating a sample event
+                const eventId = 'event-' + Date.now();
+                icsContent.push('BEGIN:VEVENT');
+                icsContent.push('UID:' + eventId + '@rostercalendar.com');
+                icsContent.push('DTSTAMP:' + timestamp);
+                icsContent.push('SUMMARY:Work Shift - ' + employeeName);
+                icsContent.push('DESCRIPTION:Roster shift for ' + employeeName);
+                icsContent.push('STATUS:CONFIRMED');
+                icsContent.push('END:VEVENT');
+                icsContent.push('');
+            }
+
+            icsContent.push('END:VCALENDAR');
+            return icsContent.join('\r\n');
+        }
+
+        // Download ICS file
+        function downloadICS(content, filename) {
+            const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        // Initialize
+        hideAllAlerts();
+        showAlert('info', 'Welcome! Upload your roster file to get started.');
+    </script>
+</body>
+</html>
