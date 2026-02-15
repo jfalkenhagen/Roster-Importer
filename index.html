@@ -83,7 +83,6 @@
         <div class="form-group">
             <label><span class="step-badge">2</span>Search Your Name</label>
             <div class="search-wrapper">
-                <!-- UPDATED PLACEHOLDER HERE -->
                 <input type="text" id="nameInput" placeholder="e.g., Megan" autocomplete="off">
                 <div id="suggestions" class="suggestions"></div>
             </div>
@@ -151,7 +150,6 @@
             if(weekStart) break;
         }
 
-        // Fallback to Cell G5 as per context
         if ((!weekStart || isNaN(weekStart)) && data[4] && data[4][6]) {
             weekStart = new Date(data[4][6]);
         }
@@ -172,7 +170,6 @@
         for (let colIndex = 4; colIndex < dateRow.length; colIndex++) {
             const cell = dateRow[colIndex];
             if (typeof cell === 'number' && cell >= 1 && cell <= 31) {
-                // Handle Month Rollover (e.g. 28 -> 1)
                 if (cell < prevDayVal) {
                     currentMonth++;
                     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
@@ -198,6 +195,7 @@
                     
                     staffList.push({
                         fullName: nameCell,
+                        // Extract just the first word of the first name
                         firstName: parts[1].trim().split(/\s+/)[0],
                         rowIndex: rowIndex
                     });
@@ -266,9 +264,8 @@
         
         if (!staff) { showStatus("⚠️ Staff not found.", "error"); return null; }
 
-        // Start time is row ABOVE name, End time is row WITH name [1]
-        const topRow = rosterData[staff.rowIndex - 1]; // Start times / Position
-        const bottomRow = rosterData[staff.rowIndex];  // End times / Name
+        const topRow = rosterData[staff.rowIndex - 1]; // Start times
+        const bottomRow = rosterData[staff.rowIndex];  // End times
 
         let events = [];
         shiftDates.forEach(dateInfo => {
@@ -276,19 +273,21 @@
             const topCell = topRow ? topRow[col] : null;
             const bottomCell = bottomRow ? bottomRow[col] : null;
             
-            const event = parseShift(topCell, bottomCell, dateInfo.date, staff.fullName);
+            // Pass firstName instead of fullName here
+            const event = parseShift(topCell, bottomCell, dateInfo.date, staff.firstName);
             if (event) events.push(event);
         });
 
         if (events.length === 0) { showStatus("❌ No shifts found.", "error"); return null; }
 
         return {
-            icsContent: createICSContent(events, staff.fullName),
+            // Pass firstName for the Calendar Name as well
+            icsContent: createICSContent(events, staff.firstName),
             firstName: staff.firstName
         };
     }
 
-    function parseShift(topCell, bottomCell, date, fullName) {
+    function parseShift(topCell, bottomCell, date, name) {
         if (!topCell && !bottomCell) return null;
         
         let topStr = topCell ? String(topCell).trim() : '';
@@ -296,41 +295,34 @@
         const topClean = topStr.toUpperCase();
         const bottomClean = bottomStr.toUpperCase();
 
-        // --- STATUS CODE LOGIC [1] ---
+        // --- STATUS CODES ---
         
-        // 1. Requested Day Off: Start = R, End = X
         if (topClean === 'R' && bottomClean === 'X') {
-            return createAllDayEvent(date, `${fullName} Requested Day Off :)`);
+            return createAllDayEvent(date, `${name} Requested Day Off :)`);
         }
         
-        // 2. Day Off: RDO or X
         if (topClean === 'RDO' || topClean === 'X' || bottomClean === 'RDO' || bottomClean === 'X') {
-            return createAllDayEvent(date, `${fullName} Day Off :)`);
+            return createAllDayEvent(date, `${name} Day Off :)`);
         }
 
-        // 3. Annual Leave: A/L
         if (topClean.includes('A/L') || bottomClean.includes('A/L')) {
-            return createAllDayEvent(date, `${fullName} Annual Leave Day`);
+            return createAllDayEvent(date, `${name} Annual Leave Day`);
         }
 
-        // 4. Concession Day: C
         if (topClean === 'C' || bottomClean === 'C') {
-            return createAllDayEvent(date, `${fullName} Concession Day :)`);
+            return createAllDayEvent(date, `${name} Concession Day :)`);
         }
 
-        // 5. Leave Without Pay: LWOP
         if (topClean.includes('LWOP') || bottomClean.includes('LWOP')) {
-            return createAllDayEvent(date, `${fullName} Leave Without Pay`);
+            return createAllDayEvent(date, `${name} Leave Without Pay`);
         }
 
-        // 6. Maternity Leave: ML
         if (topClean.includes('ML') || bottomClean.includes('ML')) {
-            return createAllDayEvent(date, `${fullName} Mat Leave`);
+            return createAllDayEvent(date, `${name} Mat Leave`);
         }
 
-        // --- TIME PARSING LOGIC ---
+        // --- TIME PARSING ---
         
-        // Handle Circled numbers and o/c
         let oncallNumber = '';
         let isOncall = false;
         
@@ -341,20 +333,17 @@
         }
         if (topClean.includes('O/C') || bottomClean.includes('O/C')) isOncall = true;
 
-        // Clean text to find times
         topStr = topStr.replace(/[a-zA-Z\/]/g, '').trim(); 
         bottomStr = bottomStr.replace(/[a-zA-Z\/]/g, '').trim();
 
         let startTime = null;
         let endTime = null;
 
-        // Scenario A: Combined "0830-1700" in Top Row
         const combinedMatch = topStr.match(/(\d{4})[\s-]*(\d{4})/);
         if (combinedMatch) {
             startTime = combinedMatch[1];
             endTime = combinedMatch[2];
         } else {
-            // Scenario B: Top=Start, Bottom=End
             const sMatch = topStr.match(/(\d{4})/);
             const eMatch = bottomStr.match(/(\d{4})/);
             if (sMatch) startTime = sMatch[1];
@@ -371,7 +360,7 @@
 
         if (endDt <= startDt) endDt.setDate(endDt.getDate() + 1);
 
-        let title = `${fullName} Shift: ${startTime}-${endTime}`;
+        let title = `${name} Shift: ${startTime}-${endTime}`;
         if (isOncall || oncallNumber) title += ` o/c${oncallNumber}`;
 
         return {
@@ -385,17 +374,17 @@
     function createAllDayEvent(date, title) {
         return {
             title: title,
-            start: date, // Only date matters
+            start: date,
             isAllDay: true
         };
     }
 
-    function createICSContent(events, fullName) {
+    function createICSContent(events, calendarName) {
         const now = new Date();
         const timestamp = formatDateICS(now);
         let lines = [
             'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Roster Importer//EN',
-            'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${fullName} Roster`
+            'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${calendarName} Roster`
         ];
 
         events.forEach((ev, idx) => {
@@ -405,18 +394,16 @@
             lines.push(`SUMMARY:${escapeICS(ev.title)}`);
             
             if (ev.isAllDay) {
-                // All Day Event Logic
                 lines.push(`DTSTART;VALUE=DATE:${formatDateOnly(ev.start)}`);
                 const nextDay = new Date(ev.start);
                 nextDay.setDate(nextDay.getDate() + 1);
                 lines.push(`DTEND;VALUE=DATE:${formatDateOnly(nextDay)}`);
                 lines.push('X-MICROSOFT-CDO-ALLDAYEVENT:TRUE');
-                lines.push('TRANSP:TRANSPARENT'); // Show as free, not busy
+                lines.push('TRANSP:TRANSPARENT'); 
             } else {
-                // Timed Event Logic
                 lines.push(`DTSTART:${formatDateICS(ev.start)}`);
                 lines.push(`DTEND:${formatDateICS(ev.end)}`);
-                lines.push('TRANSP:OPAQUE'); // Show as busy
+                lines.push('TRANSP:OPAQUE'); 
             }
             lines.push('END:VEVENT');
         });
