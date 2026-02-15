@@ -6,254 +6,66 @@
     <title>Roster to Calendar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root {
-            --primary: #007AFF;
-            --primary-dark: #0051D5;
-            --secondary: #5856D6;
-            --success: #34C759;
-            --error: #FF3B30;
+            --primary: #007AFF; --primary-dark: #0051D5; --secondary: #5856D6;
+            --success: #34C759; --error: #FF3B30; --text: #1C1C1E; --text-secondary: #8E8E93;
             --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text: #1C1C1E;
-            --text-secondary: #8E8E93;
-            --border: rgba(0, 0, 0, 0.1);
-            --shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --card-bg: rgba(255, 255, 255, 0.95); --border: rgba(0, 0, 0, 0.1);
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            background: var(--bg-gradient); color: var(--text); min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
         }
         .container {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            padding: 32px 24px;
-            width: 100%;
-            max-width: 420px;
-            animation: slideUp 0.4s ease-out;
+            background: var(--card-bg); backdrop-filter: blur(10px); border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); padding: 32px 24px; width: 100%; max-width: 420px;
         }
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .header-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-        }
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 15px;
-        }
-        .form-group {
-            margin-bottom: 24px;
-        }
-        label {
-            display: block;
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text);
-        }
+        .header { text-align: center; margin-bottom: 32px; }
+        .header-icon { font-size: 48px; margin-bottom: 12px; }
+        h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-secondary); font-size: 15px; }
+        .form-group { margin-bottom: 24px; }
+        label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
         .step-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 28px;
-            font-size: 14px;
-            font-weight: 700;
-            margin-right: 8px;
-            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            display: inline-block; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center;
+            line-height: 28px; font-size: 14px; font-weight: 700; margin-right: 8px;
         }
         input[type="file"] {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            font-size: 15px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        input[type="file"]:hover {
-            border-color: var(--primary);
-            background: rgba(0, 122, 255, 0.05);
+            width: 100%; padding: 14px 16px; border: 2px dashed var(--border);
+            border-radius: 12px; background: white; cursor: pointer;
         }
         input[type="text"] {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 16px;
-            background: white;
-            transition: all 0.3s ease;
-        }
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+            width: 100%; padding: 14px 16px; border: 2px solid var(--border);
+            border-radius: 12px; font-size: 16px; background: white;
         }
         .suggestions {
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            background: white;
-            position: absolute;
-            width: 100%;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            margin-top: 4px;
+            border: 2px solid var(--border); border-radius: 12px; max-height: 200px;
+            overflow-y: auto; background: white; position: absolute; width: 100%; z-index: 1000;
+            display: none; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); margin-top: 4px;
         }
-        .suggestion-item {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            font-size: 15px;
-            transition: background 0.2s ease;
-        }
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
-        .suggestion-item:active {
-            background: rgba(0, 122, 255, 0.1);
-        }
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 24px;
-        }
+        .suggestion-item { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .button-group { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
         button {
-            width: 100%;
-            padding: 16px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 100%; padding: 16px 24px; border: none; border-radius: 12px;
+            font-size: 17px; font-weight: 600; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 8px;
         }
-        button:active {
-            transform: scale(0.98);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-        }
-        .btn-primary:hover {
-            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-        }
-        .btn-secondary {
-            background: white;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-        .btn-secondary:hover {
-            background: rgba(0, 122, 255, 0.05);
-        }
-        #status {
-            margin-top: 20px;
-            padding: 14px 16px;
-            border-radius: 12px;
-            text-align: center;
-            display: none;
-            font-size: 14px;
-            line-height: 1.6;
-            animation: slideUp 0.3s ease-out;
-        }
-        .error {
-            background: rgba(255, 59, 48, 0.1);
-            color: var(--error);
-            border: 2px solid var(--error);
-        }
-        .success {
-            background: rgba(52, 199, 89, 0.1);
-            color: var(--success);
-            border: 2px solid var(--success);
-        }
-        .hidden {
-            display: none !important;
-        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        #status { margin-top: 20px; padding: 14px 16px; border-radius: 12px; text-align: center; display: none; }
+        .error { background: rgba(255, 59, 48, 0.1); color: var(--error); border: 2px solid var(--error); }
+        .success { background: rgba(52, 199, 89, 0.1); color: var(--success); border: 2px solid var(--success); }
+        .hidden { display: none !important; }
         .instructions {
-            background: linear-gradient(135deg, rgba(88, 86, 214, 0.1), rgba(102, 126, 234, 0.1));
-            border-left: 4px solid var(--secondary);
-            padding: 16px;
-            margin-top: 20px;
-            border-radius: 12px;
-            font-size: 13px;
-            line-height: 1.8;
-            display: none;
+            background: rgba(88, 86, 214, 0.1); border-left: 4px solid var(--secondary);
+            padding: 16px; margin-top: 20px; border-radius: 12px; font-size: 13px; line-height: 1.8; display: none;
         }
-        .instructions.show {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        .instructions strong {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: var(--secondary);
-        }
-        .instructions ol {
-            margin: 8px 0 0 20px;
-        }
-        .instructions li {
-            margin: 6px 0;
-        }
-        .search-wrapper {
-            position: relative;
-        }
-        @media (max-width: 480px) {
-            .container {
-                padding: 24px 20px;
-            }
-            h1 {
-                font-size: 24px;
-            }
-        }
+        .instructions.show { display: block; }
+        .search-wrapper { position: relative; }
     </style>
 </head>
 <body>
@@ -271,24 +83,21 @@
         <div class="form-group">
             <label><span class="step-badge">2</span>Search Your Name</label>
             <div class="search-wrapper">
-                <input type="text" id="nameInput" placeholder="e.g., Megan Falkenhagen" autocomplete="off">
+                <!-- UPDATED PLACEHOLDER HERE -->
+                <input type="text" id="nameInput" placeholder="e.g., Megan" autocomplete="off">
                 <div id="suggestions" class="suggestions"></div>
             </div>
         </div>
         <div class="button-group">
-            <button id="downloadBtn" class="btn-primary">
-                📥 Download Calendar File
-            </button>
-            <button id="shareBtn" class="btn-secondary">
-                📤 Share/Email File
-            </button>
+            <button id="downloadBtn" class="btn-primary">📥 Download Calendar File</button>
+            <button id="shareBtn" class="btn-secondary">📤 Share/Email File</button>
         </div>
         <div id="instructions" class="instructions">
             <strong>📲 To Import on iPhone:</strong>
             <ol>
-                <li><strong>Download method:</strong> Tap "Download", save to Files app, then open the .ics file from Files</li>
-                <li><strong>Share method:</strong> Tap "Share/Email", choose Mail, send to yourself, then open the email and tap the attachment</li>
-                <li>iOS will show "Add All" - tap it to import shifts to your Calendar</li>
+                <li>Tap "Download", save to Files, then tap the .ics file.</li>
+                <li>Or tap "Share", email to yourself, and tap the attachment.</li>
+                <li>Tap "Add All" to import events.</li>
             </ol>
         </div>
     </div>
@@ -296,11 +105,11 @@
 </div>
 <script>
     let rosterData = [];
-    let staffList = []; // Array of {fullName, firstName, rowIndex}
-    let shiftDates = []; // Array of {colIndex, date}
-    let lastGeneratedICS = null;
-    let lastGeneratedName = null;
+    let staffList = [];
+    let shiftDates = [];
+    
     document.getElementById('upload').addEventListener('change', handleFile, false);
+
     function handleFile(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -314,7 +123,7 @@
                 const rawData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
                 processExcelData(rawData);
             } catch (error) {
-                showStatus("❌ Error reading file: " + error.message, "error");
+                showStatus("❌ Error: " + error.message, "error");
             }
         };
         reader.readAsArrayBuffer(file);
@@ -325,51 +134,36 @@
         staffList = [];
         shiftDates = [];
 
-        // 1. Find week starting date
-        // Context indicates "Change Dates in Cell G5" and date examples like "2/16/2026".
-        // We look dynamically in the first 10 rows/cols to find a date object or string.
+        // 1. Find week starting date (Dynamic search)
         let weekStart = null;
-        
         for(let r=0; r<10; r++) {
             if(!data[r]) continue;
             for(let c=0; c<10; c++) {
                 const val = data[r][c];
                 if (val instanceof Date) {
-                    weekStart = val;
-                    break;
+                    weekStart = val; break;
                 }
-                // Check for string dates like "2/16/2026" or "DATE: 2/16/2026"
-                if (typeof val === 'string') {
-                     if (val.match(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4}/)) {
-                         // Attempt to parse string
-                         const cleanDate = val.replace('DATE:', '').trim();
-                         weekStart = new Date(cleanDate);
-                         if (!isNaN(weekStart)) break;
-                     }
+                if (typeof val === 'string' && val.match(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4}/)) {
+                    weekStart = new Date(val.replace('DATE:', '').trim());
+                    if (!isNaN(weekStart)) break;
                 }
             }
             if(weekStart) break;
         }
 
-        if (!weekStart || isNaN(weekStart)) {
-            // Fallback: The context explicitly mentions Cell G5 (Row index 4, Col index 6)
-            if (data[4] && data[4][6]) {
-                 weekStart = new Date(data[4][6]);
-            }
+        // Fallback to Cell G5 as per context
+        if ((!weekStart || isNaN(weekStart)) && data[4] && data[4][6]) {
+            weekStart = new Date(data[4][6]);
         }
 
         if (!weekStart || isNaN(weekStart)) {
-            showStatus("❌ Could not find week starting date (checked Cell G5 and others).", "error");
+            showStatus("❌ Could not find week starting date.", "error");
             return;
         }
 
         // 2. Find dates in row 7 (index 6)
-        // Row 7 contains day numbers: 16, 17... 28, 1, 2. We must handle month rollover.
-        const dateRow = data[6]; // Row 7 (0-indexed as 6)
-        if (!dateRow) {
-             showStatus("❌ Could not find date row (Row 7).", "error");
-             return;
-        }
+        const dateRow = data[6];
+        if (!dateRow) { showStatus("❌ Row 7 (Dates) missing.", "error"); return; }
 
         let currentMonth = weekStart.getMonth();
         let currentYear = weekStart.getFullYear();
@@ -377,30 +171,19 @@
 
         for (let colIndex = 4; colIndex < dateRow.length; colIndex++) {
             const cell = dateRow[colIndex];
-            
             if (typeof cell === 'number' && cell >= 1 && cell <= 31) {
-                // Detect month rollover (e.g., going from 28 to 1)
+                // Handle Month Rollover (e.g. 28 -> 1)
                 if (cell < prevDayVal) {
                     currentMonth++;
-                    if (currentMonth > 11) {
-                        currentMonth = 0;
-                        currentYear++;
-                    }
+                    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
                 }
-                
                 const date = new Date(currentYear, currentMonth, cell);
                 shiftDates.push({ colIndex: colIndex, date: date });
                 prevDayVal = cell;
             }
         }
 
-        if (shiftDates.length === 0) {
-            showStatus("❌ No dates found in row 7. Please check file format.", "error");
-            return;
-        }
-
         // 3. Find staff names
-        // Context shows names in format "SURNAME, Firstname" in column A
         for (let rowIndex = 7; rowIndex < data.length; rowIndex++) {
             const row = data[rowIndex];
             if (!row) continue;
@@ -408,32 +191,25 @@
 
             if (nameCell && typeof nameCell === 'string' && nameCell.includes(',')) {
                 const parts = nameCell.split(',');
-                if (parts.length >= 2) {
-                    const surname = parts[0].trim();
-                    const firstname = parts[1].trim().split(/\s+/)[0]; // First word of first name
-
-                    // Filter out headers like "TOTAL Earlies" or "SURNAME"
-                    if (!surname.toUpperCase().includes('TOTAL') && 
-                        !surname.toUpperCase().includes('SURNAME') && 
-                        !surname.toUpperCase().includes('ORG UNIT') &&
-                        surname.length > 1 && firstname.length > 0) {
-                        
-                        staffList.push({
-                            fullName: nameCell,
-                            firstName: firstname,
-                            rowIndex: rowIndex
-                        });
-                    }
+                const surname = parts[0].trim().toUpperCase();
+                
+                if (!surname.includes('TOTAL') && !surname.includes('SURNAME') && 
+                    !surname.includes('ORG UNIT') && parts.length >= 2) {
+                    
+                    staffList.push({
+                        fullName: nameCell,
+                        firstName: parts[1].trim().split(/\s+/)[0],
+                        rowIndex: rowIndex
+                    });
                 }
             }
         }
 
         if (staffList.length > 0) {
             document.getElementById('search-container').classList.remove('hidden');
-            showStatus(`✅ Loaded ${staffList.length} staff members and dates starting ${weekStart.toLocaleDateString()}.`, "success");
-            document.getElementById('nameInput').focus();
+            showStatus(`✅ Loaded ${staffList.length} staff.`, "success");
         } else {
-            showStatus("❌ No staff names found. Check that names are in format 'SURNAME, Firstname'.", "error");
+            showStatus("❌ No staff names found.", "error");
         }
     }
 
@@ -443,268 +219,229 @@
     nameInput.addEventListener('input', function() {
         const input = this.value.toLowerCase().trim();
         suggestionsBox.innerHTML = '';
-        if (input.length < 2) {
-            suggestionsBox.style.display = 'none';
-            return;
-        }
-        const matches = staffList.filter(staff => {
-            return staff.fullName.toLowerCase().includes(input) ||
-                   staff.firstName.toLowerCase().includes(input);
-        }).slice(0, 10);
+        if (input.length < 2) { suggestionsBox.style.display = 'none'; return; }
+        
+        const matches = staffList.filter(s => s.fullName.toLowerCase().includes(input) || s.firstName.toLowerCase().includes(input)).slice(0, 10);
+        
         if (matches.length > 0) {
             suggestionsBox.style.display = 'block';
             matches.forEach(staff => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
                 div.textContent = staff.fullName;
-                div.addEventListener('click', function() {
-                    nameInput.value = staff.fullName;
-                    suggestionsBox.style.display = 'none';
-                });
+                div.onclick = () => { nameInput.value = staff.fullName; suggestionsBox.style.display = 'none'; };
                 suggestionsBox.appendChild(div);
             });
-        } else {
-            suggestionsBox.style.display = 'none';
-        }
+        } else { suggestionsBox.style.display = 'none'; }
     });
-    document.addEventListener('click', function(e) {
-        if (e.target !== nameInput) {
-            suggestionsBox.style.display = 'none';
-        }
-    });
-    // Download Button
-    document.getElementById('downloadBtn').addEventListener('click', function() {
+
+    document.getElementById('downloadBtn').addEventListener('click', () => doExport('download'));
+    document.getElementById('shareBtn').addEventListener('click', () => doExport('share'));
+
+    function doExport(method) {
         const result = generateCalendar();
         if (!result) return;
-        const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${result.firstName}_Roster.ics`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        document.getElementById('instructions').classList.add('show');
-        showStatus("✅ Calendar file downloaded! Save to Files, then tap to open in Calendar.", "success");
-    });
-    // Share/Email Button (uses Web Share API)
-    document.getElementById('shareBtn').addEventListener('click', function() {
-        const result = generateCalendar();
-        if (!result) return;
-        const file = new File(
-            [result.icsContent],
-            `${result.firstName}_Roster.ics`,
-            { type: 'text/calendar' }
-        );
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        
+        const file = new File([result.icsContent], `${result.firstName}_Roster.ics`, { type: 'text/calendar' });
+
+        if (method === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
-                title: `${result.firstName}'s Work Roster`,
-                text: `Roster calendar for ${result.fullName}`,
+                title: `${result.firstName}'s Roster`,
                 files: [file]
-            }).then(() => {
-                document.getElementById('instructions').classList.add('show');
-                showStatus("✅ File shared! Choose Mail to email it to yourself.", "success");
-            }).catch((err) => {
-                if (err.name !== 'AbortError') {
-                    showStatus("❌ Share failed. Try the Download button instead.", "error");
-                }
-            });
+            }).catch(err => { if(err.name !== 'AbortError') showStatus("❌ Share failed.", "error"); });
         } else {
-            // Fallback: Download
-            const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
+            const url = URL.createObjectURL(file);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${result.firstName}_Roster.ics`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            showStatus("✅ File downloaded (Share not supported on this browser).", "success");
+            a.download = file.name;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            document.getElementById('instructions').classList.add('show');
+            showStatus("✅ File downloaded!", "success");
         }
-    });
+    }
+
     function generateCalendar() {
         const selectedName = nameInput.value.trim();
-        if (!selectedName) {
-            showStatus("⚠️ Please enter a name.", "error");
-            return null;
-        }
-        const staff = staffList.find(s =>
-            s.fullName.toLowerCase() === selectedName.toLowerCase()
-        );
-        if (!staff) {
-            const similar = staffList.filter(s =>
-                s.fullName.toLowerCase().includes(selectedName.toLowerCase())
-            ).slice(0, 3);
-            let errorMsg = `❌ Could not find "${selectedName}".`;
-            if (similar.length > 0) {
-                errorMsg += `\n\nDid you mean:\n• ${similar.map(s => s.fullName).join('\n• ')}`;
-            }
-            showStatus(errorMsg, "error");
-            return null;
-        }
-        // Parse shifts for this person
-        // Shifts are split across current row and next row
-        const topRow = rosterData[staff.rowIndex]; // Row with start times
-        const bottomRow = rosterData[staff.rowIndex + 1]; // Row with end times
+        const staff = staffList.find(s => s.fullName.toLowerCase() === selectedName.toLowerCase());
+        
+        if (!staff) { showStatus("⚠️ Staff not found.", "error"); return null; }
+
+        // Start time is row ABOVE name, End time is row WITH name [1]
+        const topRow = rosterData[staff.rowIndex - 1]; // Start times / Position
+        const bottomRow = rosterData[staff.rowIndex];  // End times / Name
+
         let events = [];
         shiftDates.forEach(dateInfo => {
-            const colIndex = dateInfo.colIndex;
-            const date = dateInfo.date;
-            const topCell = topRow ? topRow[colIndex] : null;
-            const bottomCell = bottomRow ? bottomRow[colIndex] : null;
-            const shiftInfo = parseShift(topCell, bottomCell, date, staff.firstName);
-            if (shiftInfo) {
-                events.push(shiftInfo);
-            }
+            const col = dateInfo.colIndex;
+            const topCell = topRow ? topRow[col] : null;
+            const bottomCell = bottomRow ? bottomRow[col] : null;
+            
+            const event = parseShift(topCell, bottomCell, dateInfo.date, staff.fullName);
+            if (event) events.push(event);
         });
-        if (events.length === 0) {
-            showStatus("❌ No shifts found for this person.", "error");
-            return null;
-        }
+
+        if (events.length === 0) { showStatus("❌ No shifts found.", "error"); return null; }
+
         return {
             icsContent: createICSContent(events, staff.fullName),
-            firstName: staff.firstName,
-            fullName: staff.fullName
+            firstName: staff.firstName
         };
     }
 
-    function parseShift(topCell, bottomCell, date, firstName) {
+    function parseShift(topCell, bottomCell, date, fullName) {
         if (!topCell && !bottomCell) return null;
         
-        let topStr = typeof topCell === 'string' ? topCell.trim() : (topCell ? String(topCell) : '');
-        let bottomStr = typeof bottomCell === 'string' ? bottomCell.trim() : (bottomCell ? String(bottomCell) : '');
-        
-        // Clean strings for logic checking
-        const clean = (str) => str.toUpperCase().replace(/\s/g, '');
-        const topClean = clean(topStr);
-        
-        // Skip non-work indicators from context (X, RDO, A/L, ML, LWOP, SECONDMENT)
-        const skipKeywords = ['X', 'RDO', 'SECONDMENT', 'LWOP', 'A/L', 'ML', 'C'];
-        
-        // If top cell is explicitly a skip keyword, return null
-        if (skipKeywords.includes(topClean)) return null;
-        
-        // If top is empty, check if bottom has time. If top is empty and bottom is not a time, skip.
-        if (topClean === '' && !bottomStr.match(/\d{4}/)) return null;
+        let topStr = topCell ? String(topCell).trim() : '';
+        let bottomStr = bottomCell ? String(bottomCell).trim() : '';
+        const topClean = topStr.toUpperCase();
+        const bottomClean = bottomStr.toUpperCase();
 
-        // Extract circled number and o/c notation
+        // --- STATUS CODE LOGIC [1] ---
+        
+        // 1. Requested Day Off: Start = R, End = X
+        if (topClean === 'R' && bottomClean === 'X') {
+            return createAllDayEvent(date, `${fullName} Requested Day Off :)`);
+        }
+        
+        // 2. Day Off: RDO or X
+        if (topClean === 'RDO' || topClean === 'X' || bottomClean === 'RDO' || bottomClean === 'X') {
+            return createAllDayEvent(date, `${fullName} Day Off :)`);
+        }
+
+        // 3. Annual Leave: A/L
+        if (topClean.includes('A/L') || bottomClean.includes('A/L')) {
+            return createAllDayEvent(date, `${fullName} Annual Leave Day`);
+        }
+
+        // 4. Concession Day: C
+        if (topClean === 'C' || bottomClean === 'C') {
+            return createAllDayEvent(date, `${fullName} Concession Day :)`);
+        }
+
+        // 5. Leave Without Pay: LWOP
+        if (topClean.includes('LWOP') || bottomClean.includes('LWOP')) {
+            return createAllDayEvent(date, `${fullName} Leave Without Pay`);
+        }
+
+        // 6. Maternity Leave: ML
+        if (topClean.includes('ML') || bottomClean.includes('ML')) {
+            return createAllDayEvent(date, `${fullName} Mat Leave`);
+        }
+
+        // --- TIME PARSING LOGIC ---
+        
+        // Handle Circled numbers and o/c
         let oncallNumber = '';
         let isOncall = false;
         
-        // Handle Circled numbers (①, ②, ③)
         const circledMatch = topStr.match(/[①②③]/) || bottomStr.match(/[①②③]/);
         if (circledMatch) {
             oncallNumber = circledMatch[0];
-            // Remove from strings so they don't interfere with time parsing
             topStr = topStr.replace(/[①②③]/g, ''); 
         }
-        
-        // Handle o/c (On Call)
-        if (topStr.toLowerCase().includes('o/c') || bottomStr.toLowerCase().includes('o/c')) {
-            isOncall = true;
-        }
+        if (topClean.includes('O/C') || bottomClean.includes('O/C')) isOncall = true;
 
-        // Handle i/c (In Charge - optional, just remove text to find time)
-        topStr = topStr.replace(/i\/c/gi, '');
-        bottomStr = bottomStr.replace(/i\/c/gi, '');
+        // Clean text to find times
+        topStr = topStr.replace(/[a-zA-Z\/]/g, '').trim(); 
+        bottomStr = bottomStr.replace(/[a-zA-Z\/]/g, '').trim();
 
         let startTime = null;
         let endTime = null;
 
-        // SCENARIO 1: Combined format "0830-1700" in top cell (found in context)
-        // Look for 4 digits, separator, 4 digits
-        const combinedMatch = topStr.match(/(\d{4})\s*-\s*(\d{4})/);
-        
+        // Scenario A: Combined "0830-1700" in Top Row
+        const combinedMatch = topStr.match(/(\d{4})[\s-]*(\d{4})/);
         if (combinedMatch) {
             startTime = combinedMatch[1];
             endTime = combinedMatch[2];
         } else {
-            // SCENARIO 2: Split format "0800-" (top) and "1700" (bottom)
-            const startMatch = topStr.match(/(\d{4})/);
-            const endMatch = bottomStr.match(/(\d{4})/);
-            
-            if (startMatch) startTime = startMatch[1];
-            if (endMatch) endTime = endMatch[1];
+            // Scenario B: Top=Start, Bottom=End
+            const sMatch = topStr.match(/(\d{4})/);
+            const eMatch = bottomStr.match(/(\d{4})/);
+            if (sMatch) startTime = sMatch[1];
+            if (eMatch) endTime = eMatch[1];
         }
 
         if (!startTime || !endTime) return null;
 
-        // Create Dates
-        const startDate = new Date(date);
-        const endDate = new Date(date);
+        const startDt = new Date(date);
+        startDt.setHours(parseInt(startTime.substring(0,2)), parseInt(startTime.substring(2,4)), 0, 0);
         
-        startDate.setHours(parseInt(startTime.substr(0, 2)), parseInt(startTime.substr(2, 2)), 0, 0);
-        endDate.setHours(parseInt(endTime.substr(0, 2)), parseInt(endTime.substr(2, 2)), 0, 0);
+        const endDt = new Date(date);
+        endDt.setHours(parseInt(endTime.substring(0,2)), parseInt(endTime.substring(2,4)), 0, 0);
 
-        // Handle overnight shifts (end time is smaller than start time)
-        if (endDate <= startDate) {
-            endDate.setDate(endDate.getDate() + 1);
-        }
+        if (endDt <= startDt) endDt.setDate(endDt.getDate() + 1);
 
-        // Build title
-        let title = `${firstName} Shift: ${startTime}-${endTime}`;
-        if (isOncall || oncallNumber) {
-            title += ` o/c${oncallNumber}`;
-        }
+        let title = `${fullName} Shift: ${startTime}-${endTime}`;
+        if (isOncall || oncallNumber) title += ` o/c${oncallNumber}`;
 
         return {
             title: title,
-            start: startDate,
-            end: endDate
+            start: startDt,
+            end: endDt,
+            isAllDay: false
+        };
+    }
+
+    function createAllDayEvent(date, title) {
+        return {
+            title: title,
+            start: date, // Only date matters
+            isAllDay: true
         };
     }
 
     function createICSContent(events, fullName) {
         const now = new Date();
         const timestamp = formatDateICS(now);
-        let lines = [];
-        lines.push('BEGIN:VCALENDAR');
-        lines.push('VERSION:2.0');
-        lines.push('PRODID:-//Roster Importer//EN');
-        lines.push('CALSCALE:GREGORIAN');
-        lines.push('METHOD:PUBLISH');
-        lines.push(`X-WR-CALNAME:${fullName} Work Roster`);
-        lines.push('X-WR-TIMEZONE:Australia/Brisbane');
-        events.forEach((ev, index) => {
-            const uid = `${timestamp}-${index}@roster-importer.com`;
+        let lines = [
+            'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Roster Importer//EN',
+            'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${fullName} Roster`
+        ];
+
+        events.forEach((ev, idx) => {
             lines.push('BEGIN:VEVENT');
-            lines.push(`UID:${uid}`);
+            lines.push(`UID:${timestamp}-${idx}@roster.com`);
             lines.push(`DTSTAMP:${timestamp}`);
-            lines.push(`DTSTART:${formatDateICS(ev.start)}`);
-            lines.push(`DTEND:${formatDateICS(ev.end)}`);
             lines.push(`SUMMARY:${escapeICS(ev.title)}`);
-            lines.push('STATUS:CONFIRMED');
-            lines.push('TRANSP:OPAQUE');
-            lines.push('SEQUENCE:0');
+            
+            if (ev.isAllDay) {
+                // All Day Event Logic
+                lines.push(`DTSTART;VALUE=DATE:${formatDateOnly(ev.start)}`);
+                const nextDay = new Date(ev.start);
+                nextDay.setDate(nextDay.getDate() + 1);
+                lines.push(`DTEND;VALUE=DATE:${formatDateOnly(nextDay)}`);
+                lines.push('X-MICROSOFT-CDO-ALLDAYEVENT:TRUE');
+                lines.push('TRANSP:TRANSPARENT'); // Show as free, not busy
+            } else {
+                // Timed Event Logic
+                lines.push(`DTSTART:${formatDateICS(ev.start)}`);
+                lines.push(`DTEND:${formatDateICS(ev.end)}`);
+                lines.push('TRANSP:OPAQUE'); // Show as busy
+            }
             lines.push('END:VEVENT');
         });
+
         lines.push('END:VCALENDAR');
         return lines.join('\r\n');
     }
-    function formatDateICS(date) {
-        const pad = (n) => n.toString().padStart(2, '0');
-        return date.getUTCFullYear() +
-               pad(date.getUTCMonth() + 1) +
-               pad(date.getUTCDate()) + 'T' +
-               pad(date.getUTCHours()) +
-               pad(date.getUTCMinutes()) +
-               pad(date.getUTCSeconds()) + 'Z';
+
+    function formatDateICS(d) {
+        const pad = n => n.toString().padStart(2, '0');
+        return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' +
+               pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + 'Z';
     }
-    function escapeICS(text) {
-        return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
+
+    function formatDateOnly(d) {
+        const pad = n => n.toString().padStart(2, '0');
+        return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
     }
+
+    function escapeICS(t) { return t.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n'); }
+    
     function showStatus(msg, type) {
         const el = document.getElementById('status');
-        el.textContent = msg;
-        el.className = type;
-        el.style.display = 'block';
-        if (type === 'success') {
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 10000);
-        }
+        el.textContent = msg; el.className = type; el.style.display = 'block';
+        if (type === 'success') setTimeout(() => el.style.display = 'none', 10000);
     }
 </script>
 </body>
