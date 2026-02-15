@@ -3,746 +3,621 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Roster Calendar">
-    <title>Roster Calendar Importer</title>
+    <title>Roster to Calendar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        :root {
+            --primary: #007AFF;
+            --bg: #F2F2F7;
+            --card: #FFFFFF;
+            --text: #000000;
+            --error: #FF3B30;
+            --success: #34C759;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
             padding: 20px;
-            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-
-        .header h1 {
+        h1 {
             font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 25px 20px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .form-group input[type="file"] {
-            display: none;
-        }
-
-        .file-upload-btn {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            background: #f7f7f7;
-            border: 2px dashed #667eea;
-            border-radius: 12px;
+            margin-bottom: 20px;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 15px;
-            color: #667eea;
-            font-weight: 500;
+            font-weight: 600;
         }
 
-        .file-upload-btn:active {
-            transform: scale(0.98);
-        }
-
-        .file-upload-btn.has-file {
-            background: #e8f5e9;
-            border-color: #4caf50;
-            color: #2e7d32;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 16px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        }
-
-        .autocomplete-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #667eea;
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            max-height: 240px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            display: none;
-        }
-
-        .autocomplete-dropdown.show {
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
             display: block;
+            color: #666;
         }
 
-        .autocomplete-item {
-            padding: 14px 16px;
+        input[type="file"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background: white;
+        }
+
+        input[type="file"] {
             cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 15px;
-            transition: background 0.2s;
         }
 
-        .autocomplete-item:last-child {
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 10px;
+        }
+
+        button:active {
+            opacity: 0.7;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background-color: #8E8E93;
+        }
+
+        .suggestions {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            position: absolute;
+            width: calc(100% - 48px);
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: -16px;
+        }
+
+        .suggestion-item {
+            padding: 14px 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .suggestion-item:last-child {
             border-bottom: none;
         }
 
-        .autocomplete-item:active {
-            background: #667eea;
-            color: white;
+        .suggestion-item:active {
+            background-color: #e8e8e8;
         }
 
-        .autocomplete-item .name-primary {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .autocomplete-item .name-secondary {
-            font-size: 13px;
-            color: #666;
-            margin-top: 2px;
-        }
-
-        .generate-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .generate-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-        }
-
-        .generate-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .alert {
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        #status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
             font-size: 14px;
             line-height: 1.5;
-            display: none;
         }
 
-        .alert.show {
-            display: block;
-            animation: slideIn 0.3s ease;
+        .error { 
+            background-color: #ffe5e5; 
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+        
+        .success { 
+            background-color: #e5ffe5; 
+            color: var(--success);
+            border: 1px solid var(--success);
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .hidden { 
+            display: none !important; 
         }
 
-        .alert-error {
-            background: #ffebee;
-            color: #c62828;
-            border-left: 4px solid #c62828;
-        }
-
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid #2e7d32;
-        }
-
-        .alert-info {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-left: 4px solid #1565c0;
-        }
-
-        .alert strong {
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .suggestion {
-            margin-top: 8px;
-            padding: 10px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 8px;
-            font-size: 13px;
-        }
-
-        .suggestion-name {
+        .step-number {
             display: inline-block;
-            background: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            margin-top: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            text-align: center;
+            line-height: 24px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 8px;
         }
 
         .instructions {
             background: #f9f9f9;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
+            border-left: 4px solid var(--primary);
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 4px;
             font-size: 13px;
             line-height: 1.6;
-            color: #666;
+            display: none;
         }
 
-        .instructions h3 {
-            font-size: 15px;
-            color: #333;
-            margin-bottom: 10px;
+        .instructions.show {
+            display: block;
         }
 
         .instructions ol {
-            margin-left: 20px;
+            margin: 8px 0;
+            padding-left: 20px;
         }
 
         .instructions li {
-            margin-bottom: 8px;
+            margin: 4px 0;
         }
 
-        /* iOS Safari specific fixes */
-        @supports (-webkit-touch-callout: none) {
-            input, button {
-                -webkit-appearance: none;
-                border-radius: 12px;
-            }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📅 Roster Calendar</h1>
-            <p>Import your shifts to calendar</p>
+
+<div class="container">
+    <h1>📅 Roster Importer</h1>
+    
+    <label for="upload"><span class="step-number">1</span>Select Excel File</label>
+    <input type="file" id="upload" accept=".xlsx, .xls">
+
+    <div id="search-container" class="hidden">
+        <label for="nameInput"><span class="step-number">2</span>Search Your Name</label>
+        <div style="position: relative;">
+            <input type="text" id="nameInput" placeholder="Start typing your name..." autocomplete="off">
+            <div id="suggestions" class="suggestions"></div>
+        </div>
+
+        <div class="button-group">
+            <button id="generateBtn">📲 Share Calendar File</button>
+            <button id="emailBtn" class="secondary">📧 Email Instructions</button>
         </div>
         
-        <div class="content">
-            <div class="alert alert-error" id="errorAlert"></div>
-            <div class="alert alert-success" id="successAlert"></div>
-            <div class="alert alert-info" id="infoAlert"></div>
-            
-            <div class="form-group">
-                <label for="fileInput">1. Select Roster File (.xlsx)</label>
-                <input type="file" id="fileInput" accept=".xlsx">
-                <label for="fileInput" class="file-upload-btn" id="fileUploadLabel">
-                    📎 Choose Excel File
-                </label>
-            </div>
-
-            <div class="form-group">
-                <label for="nameInput">2. Enter Your Name</label>
-                <div class="input-wrapper">
-                    <input type="text" 
-                           id="nameInput" 
-                           placeholder="e.g., Megan Falkenhagen or Falkenhagen, Megan"
-                           autocomplete="off">
-                    <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
-                </div>
-            </div>
-
-            <button class="generate-btn" id="generateBtn" disabled>
-                Generate Calendar File
-            </button>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Processing...</p>
-            </div>
-
-            <div class="instructions">
-                <h3>📱 How to Use on iPhone:</h3>
-                <ol>
-                    <li>Save this HTML file to iCloud Drive or Files app</li>
-                    <li>Open it in Safari browser</li>
-                    <li>Upload your roster Excel file</li>
-                    <li>Type your name (suggestions will appear)</li>
-                    <li>Tap "Generate Calendar File"</li>
-                    <li>Open the downloaded .ics file to add to Calendar</li>
-                </ol>
-            </div>
+        <div id="instructions" class="instructions">
+            <strong>📲 How to Import on iPhone:</strong>
+            <ol>
+                <li><strong>Using Share:</strong> Tap "Share Calendar File" → Save to Files → Open the file → Tap "Add All"</li>
+                <li><strong>Using Email:</strong> Tap "Email Instructions" → Send to yourself → Open email on iPhone → Follow the steps in the email</li>
+            </ol>
         </div>
     </div>
 
-    <!-- Include SheetJS library -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    
-    <script>
-        // Global variables
-        let workbook = null;
-        let employeeNames = [];
-        let selectedName = '';
+    <div id="status"></div>
+</div>
 
-        // DOM elements
-        const fileInput = document.getElementById('fileInput');
-        const fileUploadLabel = document.getElementById('fileUploadLabel');
-        const nameInput = document.getElementById('nameInput');
-        const autocompleteDropdown = document.getElementById('autocompleteDropdown');
-        const generateBtn = document.getElementById('generateBtn');
-        const errorAlert = document.getElementById('errorAlert');
-        const successAlert = document.getElementById('successAlert');
-        const infoAlert = document.getElementById('infoAlert');
-        const loading = document.getElementById('loading');
+<script>
+    let rosterData = [];
+    let rosterDates = [];
+    let staffNames = [];
+    let lastGeneratedICS = null;
+    let lastGeneratedName = null;
 
-        // Show alert function
-        function showAlert(type, message, suggestion = null) {
-            hideAllAlerts();
-            const alert = type === 'error' ? errorAlert : type === 'success' ? successAlert : infoAlert;
-            
-            let content = `<strong>${type === 'error' ? '❌ Error' : type === 'success' ? '✅ Success' : 'ℹ️ Info'}</strong>${message}`;
-            
-            if (suggestion) {
-                content += `<div class="suggestion">Did you mean: <span class="suggestion-name" onclick="selectSuggestion('${suggestion}')">${suggestion}</span></div>`;
-            }
-            
-            alert.innerHTML = content;
-            alert.classList.add('show');
-            
-            // Auto-hide success messages
-            if (type === 'success') {
-                setTimeout(() => alert.classList.remove('show'), 5000);
-            }
-        }
+    // File Upload Handler
+    document.getElementById('upload').addEventListener('change', handleFile, false);
 
-        function hideAllAlerts() {
-            errorAlert.classList.remove('show');
-            successAlert.classList.remove('show');
-            infoAlert.classList.remove('show');
-        }
+    function handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-        function selectSuggestion(name) {
-            nameInput.value = name;
-            selectedName = name;
-            hideAllAlerts();
-            checkFormReady();
-        }
+        showStatus("📂 Loading file...", "success");
 
-        // Levenshtein distance for fuzzy matching
-        function levenshteinDistance(str1, str2) {
-            const m = str1.length;
-            const n = str2.length;
-            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-
-            for (let i = 0; i <= m; i++) dp[i][0] = i;
-            for (let j = 0; j <= n; j++) dp[0][j] = j;
-
-            for (let i = 1; i <= m; i++) {
-                for (let j = 1; j <= n; j++) {
-                    if (str1[i - 1].toLowerCase() === str2[j - 1].toLowerCase()) {
-                        dp[i][j] = dp[i - 1][j - 1];
-                    } else {
-                        dp[i][j] = Math.min(
-                            dp[i - 1][j - 1] + 1,
-                            dp[i][j - 1] + 1,
-                            dp[i - 1][j] + 1
-                        );
-                    }
-                }
-            }
-            return dp[m][n];
-        }
-
-        // Find closest name match
-        function findClosestMatch(input) {
-            if (!input || input.length < 2) return null;
-            
-            const inputLower = input.toLowerCase();
-            let bestMatch = null;
-            let bestScore = Infinity;
-
-            employeeNames.forEach(name => {
-                const distance = levenshteinDistance(input, name);
-                const similarity = distance / Math.max(input.length, name.length);
-                
-                if (similarity < 0.4 && distance < bestScore) {
-                    bestScore = distance;
-                    bestMatch = name;
-                }
-            });
-
-            return bestMatch;
-        }
-
-        // Normalize name formats
-        function normalizeNameFormats(input) {
-            const formats = [];
-            const cleaned = input.trim();
-            
-            // Original input
-            formats.push(cleaned);
-            
-            // Handle "Lastname, Firstname" format
-            if (cleaned.includes(',')) {
-                const parts = cleaned.split(',').map(p => p.trim());
-                if (parts.length === 2) {
-                    // Convert to "Firstname Lastname"
-                    formats.push(`${parts[1]} ${parts[0]}`);
-                    // Try uppercase
-                    formats.push(`${parts[0].toUpperCase()}, ${parts[1]}`);
-                }
-            } else {
-                // Handle "Firstname Lastname" format
-                const parts = cleaned.split(' ').filter(p => p);
-                if (parts.length >= 2) {
-                    // Convert to "Lastname, Firstname"
-                    formats.push(`${parts[parts.length - 1]}, ${parts.slice(0, -1).join(' ')}`);
-                    // Try uppercase
-                    formats.push(`${parts[parts.length - 1].toUpperCase()}, ${parts.slice(0, -1).join(' ')}`);
-                }
-            }
-            
-            return formats;
-        }
-
-        // File input handler
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (!file.name.endsWith('.xlsx')) {
-                showAlert('error', 'Please select a valid Excel file (.xlsx)');
-                return;
-            }
-
-            loading.classList.add('show');
-            hideAllAlerts();
-
+        const reader = new FileReader();
+        reader.onload = function(e) {
             try {
-                const data = await file.arrayBuffer();
-                workbook = XLSX.read(data, { type: 'array' });
-                
-                // Extract employee names from the first sheet
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array', cellDates: true});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                
-                employeeNames = [];
-                // Look for names in the spreadsheet (adjust column index as needed)
-                jsonData.forEach(row => {
-                    if (row[0] && typeof row[0] === 'string' && row[0].includes(',')) {
-                        employeeNames.push(row[0].trim());
+                const rawData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                processExcelData(rawData);
+            } catch (error) {
+                showStatus("❌ Error reading file. Please ensure it's a valid Excel file.", "error");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Process Excel Data
+    function processExcelData(data) {
+        rosterData = data;
+        staffNames = [];
+        rosterDates = [];
+
+        // Find header row with "SURNAME"
+        let headerRowIndex = -1;
+        for(let i = 0; i < Math.min(data.length, 10); i++) {
+            const row = data[i];
+            if (row && row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('SURNAME'))) {
+                headerRowIndex = i;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) {
+            showStatus("❌ Could not find 'SURNAME' column. Please check your file format.", "error");
+            return;
+        }
+
+        // Extract dates from the row above header
+        const dateRow = data[headerRowIndex - 1] || data[headerRowIndex];
+        dateRow.forEach((cell, index) => {
+            if (index > 0) {
+                if (cell instanceof Date) {
+                    rosterDates.push({ index: index, date: cell });
+                } else if (typeof cell === 'string' && !isNaN(Date.parse(cell))) {
+                    rosterDates.push({ index: index, date: new Date(cell) });
+                } else if (typeof cell === 'number') {
+                    const date = new Date((cell - 25569) * 86400 * 1000);
+                    if (date.getFullYear() > 2000 && date.getFullYear() < 2100) {
+                        rosterDates.push({ index: index, date: date });
                     }
+                }
+            }
+        });
+
+        // Extract staff names
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const row = data[i];
+            if (row[0] && typeof row[0] === 'string' && row[0].trim()) {
+                const name = row[0].trim();
+                if (!name.toUpperCase().includes('TOTAL') && 
+                    !name.toUpperCase().includes('SURNAME') &&
+                    name.length > 2) {
+                    staffNames.push(name);
+                }
+            }
+        }
+
+        if (staffNames.length > 0 && rosterDates.length > 0) {
+            document.getElementById('search-container').classList.remove('hidden');
+            showStatus(`✅ Loaded ${staffNames.length} staff members and ${rosterDates.length} dates.`, "success");
+            document.getElementById('nameInput').focus();
+        } else if (staffNames.length === 0) {
+            showStatus("❌ No staff names found. Check that names are in the first column.", "error");
+        } else {
+            showStatus("❌ No dates found. Check that dates are in the header row.", "error");
+        }
+    }
+
+    // Autocomplete
+    const nameInput = document.getElementById('nameInput');
+    const suggestionsBox = document.getElementById('suggestions');
+
+    nameInput.addEventListener('input', function() {
+        const input = this.value.toLowerCase().trim();
+        suggestionsBox.innerHTML = '';
+        
+        if (input.length < 2) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+
+        const searchParts = input.split(/[\s,]+/).filter(p => p.length > 0);
+        
+        const matches = staffNames.filter(name => {
+            const lowerName = name.toLowerCase();
+            return searchParts.every(part => lowerName.includes(part));
+        }).slice(0, 10);
+
+        if (matches.length > 0) {
+            suggestionsBox.style.display = 'block';
+            matches.forEach(match => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = match;
+                div.addEventListener('click', function() {
+                    nameInput.value = match;
+                    suggestionsBox.style.display = 'none';
                 });
-
-                if (employeeNames.length === 0) {
-                    showAlert('error', 'No employee names found in the roster file. Please check the file format.');
-                    workbook = null;
-                } else {
-                    fileUploadLabel.textContent = `✓ ${file.name}`;
-                    fileUploadLabel.classList.add('has-file');
-                    showAlert('success', `File loaded successfully! Found ${employeeNames.length} employees.`);
-                    checkFormReady();
-                }
-            } catch (error) {
-                showAlert('error', `Failed to read file: ${error.message}`);
-                workbook = null;
-            } finally {
-                loading.classList.remove('show');
-            }
-        });
-
-        // Autocomplete functionality
-        nameInput.addEventListener('input', (e) => {
-            const input = e.target.value;
-            
-            if (input.length < 3) {
-                autocompleteDropdown.classList.remove('show');
-                autocompleteDropdown.innerHTML = '';
-                selectedName = '';
-                checkFormReady();
-                return;
-            }
-
-            if (employeeNames.length === 0) {
-                showAlert('error', 'Please upload a roster file first.');
-                return;
-            }
-
-            // Search for matching names
-            const inputLower = input.toLowerCase();
-            const matches = employeeNames.filter(name => {
-                const nameLower = name.toLowerCase();
-                const formats = normalizeNameFormats(name);
-                
-                return nameLower.includes(inputLower) || 
-                       formats.some(f => f.toLowerCase().includes(inputLower));
-            }).slice(0, 8); // Limit to 8 results
-
-            if (matches.length > 0) {
-                autocompleteDropdown.innerHTML = matches.map(name => {
-                    const parts = name.split(',');
-                    const lastName = parts[0].trim();
-                    const firstName = parts[1] ? parts[1].trim() : '';
-                    
-                    return `
-                        <div class="autocomplete-item" data-name="${name}">
-                            <div class="name-primary">${lastName}${firstName ? ',' : ''} ${firstName}</div>
-                            ${firstName ? `<div class="name-secondary">${firstName} ${lastName}</div>` : ''}
-                        </div>
-                    `;
-                }).join('');
-                autocompleteDropdown.classList.add('show');
-            } else {
-                autocompleteDropdown.classList.remove('show');
-            }
-            
-            selectedName = '';
-            checkFormReady();
-        });
-
-        // Autocomplete item click handler
-        autocompleteDropdown.addEventListener('click', (e) => {
-            const item = e.target.closest('.autocomplete-item');
-            if (item) {
-                const name = item.dataset.name;
-                nameInput.value = name;
-                selectedName = name;
-                autocompleteDropdown.classList.remove('show');
-                hideAllAlerts();
-                checkFormReady();
-            }
-        });
-
-        // Close autocomplete when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.input-wrapper')) {
-                autocompleteDropdown.classList.remove('show');
-            }
-        });
-
-        // Check if form is ready
-        function checkFormReady() {
-            generateBtn.disabled = !(workbook && (selectedName || nameInput.value.length > 0));
-        }
-
-        // Generate calendar file
-        generateBtn.addEventListener('click', async () => {
-            hideAllAlerts();
-            
-            if (!workbook) {
-                showAlert('error', 'Please upload a roster file first.');
-                return;
-            }
-
-            const inputName = nameInput.value.trim();
-            if (!inputName) {
-                showAlert('error', 'Please enter your name.');
-                return;
-            }
-
-            loading.classList.add('show');
-
-            try {
-                // Try to find exact match first
-                const formats = normalizeNameFormats(inputName);
-                let matchedName = null;
-
-                for (const format of formats) {
-                    matchedName = employeeNames.find(name => 
-                        name.toLowerCase() === format.toLowerCase()
-                    );
-                    if (matchedName) break;
-                }
-
-                // If no exact match, try fuzzy matching
-                if (!matchedName) {
-                    const closestMatch = findClosestMatch(inputName);
-                    
-                    if (closestMatch) {
-                        loading.classList.remove('show');
-                        showAlert('error', `Name "${inputName}" not found in roster.`, closestMatch);
-                        return;
-                    } else {
-                        loading.classList.remove('show');
-                        showAlert('error', `Name "${inputName}" not found in roster. Please check spelling or select from suggestions.`);
-                        return;
-                    }
-                }
-
-                // Process roster data and generate calendar
-                // This is where you'd add your calendar generation logic
-                // For now, showing a success message
-                const icsContent = generateICSFile(matchedName);
-                downloadICS(icsContent, `${matchedName.replace(/[^a-zA-Z0-9]/g, '_')}_roster.ics`);
-                
-                loading.classList.remove('show');
-                showAlert('success', `Calendar file generated for ${matchedName}! The file should download automatically. Open it to add shifts to your calendar.`);
-                
-            } catch (error) {
-                loading.classList.remove('show');
-                showAlert('error', `An error occurred: ${error.message}`);
-            }
-        });
-
-        // Generate ICS file content
-        function generateICSFile(employeeName) {
-            // This is a basic ICS template - you'll need to customize based on your roster data
-            const now = new Date();
-            const timestamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-            
-            let icsContent = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                'PRODID:-//Roster Calendar//EN',
-                'CALSCALE:GREGORIAN',
-                'METHOD:PUBLISH',
-                'X-WR-CALNAME:Work Roster - ' + employeeName,
-                'X-WR-TIMEZONE:Australia/Brisbane',
-                ''
-            ];
-
-            // Extract shift data from workbook for this employee
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-            
-            // Find employee row and process shifts
-            // This is simplified - you'll need to adapt to your actual roster structure
-            let employeeRow = null;
-            jsonData.forEach((row, index) => {
-                if (row[0] && row[0].toString().toLowerCase() === employeeName.toLowerCase()) {
-                    employeeRow = row;
-                }
+                suggestionsBox.appendChild(div);
             });
+        } else {
+            suggestionsBox.style.display = 'none';
+        }
+    });
 
-            if (employeeRow) {
-                // Process shifts from the row
-                // This is where you'd parse the shift data and create calendar events
-                // For demonstration, creating a sample event
-                const eventId = 'event-' + Date.now();
-                icsContent.push('BEGIN:VEVENT');
-                icsContent.push('UID:' + eventId + '@rostercalendar.com');
-                icsContent.push('DTSTAMP:' + timestamp);
-                icsContent.push('SUMMARY:Work Shift - ' + employeeName);
-                icsContent.push('DESCRIPTION:Roster shift for ' + employeeName);
-                icsContent.push('STATUS:CONFIRMED');
-                icsContent.push('END:VEVENT');
-                icsContent.push('');
+    document.addEventListener('click', function(e) {
+        if (e.target !== nameInput) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    // Generate Calendar - Main Button
+    document.getElementById('generateBtn').addEventListener('click', function() {
+        const icsContent = generateCalendar();
+        if (!icsContent) return;
+
+        // Try Web Share API first (best for iOS)
+        if (navigator.share && navigator.canShare) {
+            try {
+                const file = new File(
+                    [icsContent], 
+                    `${lastGeneratedName.replace(/[^a-z0-9]/gi, '_')}_Roster.ics`, 
+                    { type: 'text/calendar' }
+                );
+
+                if (navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: `${lastGeneratedName} Roster`,
+                        text: 'Work roster calendar',
+                        files: [file]
+                    }).then(() => {
+                        document.getElementById('instructions').classList.add('show');
+                        showStatus("✅ Calendar shared! Save to Files, then tap to open in Calendar app.", "success");
+                    }).catch((err) => {
+                        if (err.name !== 'AbortError') {
+                            downloadFallback(icsContent, lastGeneratedName);
+                        }
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.log('Share API failed:', err);
             }
-
-            icsContent.push('END:VCALENDAR');
-            return icsContent.join('\r\n');
         }
 
-        // Download ICS file
-        function downloadICS(content, filename) {
-            const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
+        // Fallback to download
+        downloadFallback(icsContent, lastGeneratedName);
+    });
+
+    // Email Button
+    document.getElementById('emailBtn').addEventListener('click', function() {
+        const icsContent = generateCalendar();
+        if (!icsContent) return;
+
+        const subject = encodeURIComponent(`${lastGeneratedName} Work Roster`);
+        const body = encodeURIComponent(
+`Hi,
+
+Your work roster calendar file is ready!
+
+TO IMPORT ON iPHONE:
+1. Open this email on your iPhone
+2. Scroll down to see the calendar data below
+3. Tap and hold on the calendar data
+4. Select "Copy"
+5. Open Notes app and paste
+6. Tap the pasted text
+7. Your iPhone will offer to create calendar events
+8. Tap "Add All"
+
+CALENDAR DATA (Copy everything below this line):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${icsContent}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Alternatively, you can save this as a file named "roster.ics" and open it on your iPhone.
+
+`);
+        
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        document.getElementById('instructions').classList.add('show');
+        showStatus("📧 Email opened! Send it to yourself and follow the instructions.", "success");
+    });
+
+    function generateCalendar() {
+        const selectedName = nameInput.value.trim();
+        
+        if (!selectedName) {
+            showStatus("⚠️ Please enter a name.", "error");
+            return null;
         }
 
-        // Initialize
-        hideAllAlerts();
-        showAlert('info', 'Welcome! Upload your roster file to get started.');
-    </script>
+        let targetRow = rosterData.find(row => row[0] === selectedName);
+
+        if (!targetRow) {
+            const lowerSelected = selectedName.toLowerCase();
+            targetRow = rosterData.find(row => 
+                row[0] && typeof row[0] === 'string' && 
+                row[0].toLowerCase() === lowerSelected
+            );
+        }
+
+        if (!targetRow) {
+            const similar = staffNames.filter(name => 
+                name.toLowerCase().includes(selectedName.toLowerCase())
+            ).slice(0, 3);
+            
+            let errorMsg = `❌ Could not find "${selectedName}".`;
+            if (similar.length > 0) {
+                errorMsg += `\n\nDid you mean:\n• ${similar.join('\n• ')}`;
+            }
+            showStatus(errorMsg, "error");
+            return null;
+        }
+
+        let events = [];
+        rosterDates.forEach(dateObj => {
+            const colIndex = dateObj.index;
+            const shiftContent = targetRow[colIndex];
+
+            if (shiftContent && typeof shiftContent === 'string') {
+                const shiftInfo = parseShift(shiftContent, dateObj.date);
+                if (shiftInfo) {
+                    events.push(shiftInfo);
+                }
+            }
+        });
+
+        if (events.length === 0) {
+            showStatus("❌ No shifts found for this person.", "error");
+            return null;
+        }
+
+        lastGeneratedName = selectedName;
+        lastGeneratedICS = createICSContent(events, selectedName);
+        return lastGeneratedICS;
+    }
+
+    function parseShift(cellText, date) {
+        const cleaned = cellText.trim().toUpperCase();
+        
+        // Skip non-work days
+        if (!cleaned || cleaned === 'X' || cleaned === 'RDO' || 
+            cleaned.includes('SECONDMENT') || cleaned.includes('LWOP')) {
+            return null;
+        }
+
+        // Check for time range (e.g., "0800-1630")
+        const timeMatch = cellText.match(/(\d{4})-(\d{4})/);
+        
+        let title = `Shift: ${cellText}`;
+        let startDate = new Date(date);
+        let endDate = new Date(date);
+
+        if (timeMatch) {
+            const startStr = timeMatch[1];
+            const endStr = timeMatch[2];
+
+            startDate.setHours(parseInt(startStr.substr(0,2)), parseInt(startStr.substr(2,2)), 0, 0);
+            endDate.setHours(parseInt(endStr.substr(0,2)), parseInt(endStr.substr(2,2)), 0, 0);
+
+            if (endDate <= startDate) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
+        } else {
+            // All-day event for codes like "A/L", "C", "ML"
+            startDate.setHours(9, 0, 0, 0);
+            endDate.setHours(17, 0, 0, 0);
+        }
+
+        return {
+            title: title,
+            start: startDate,
+            end: endDate
+        };
+    }
+
+    // Create iOS-compatible ICS content
+    function createICSContent(events, name) {
+        const now = new Date();
+        const timestamp = formatDateICS(now);
+        
+        // Use CRLF line endings (required by iCalendar spec)
+        let lines = [];
+        lines.push('BEGIN:VCALENDAR');
+        lines.push('VERSION:2.0');
+        lines.push('PRODID:-//Roster Importer//EN');
+        lines.push('CALSCALE:GREGORIAN');
+        lines.push('METHOD:PUBLISH');
+        lines.push(`X-WR-CALNAME:${name} Work Roster`);
+        lines.push('X-WR-TIMEZONE:Australia/Brisbane');
+        
+        events.forEach((ev, index) => {
+            const uid = `${timestamp}-${index}@roster-importer`;
+            
+            lines.push('BEGIN:VEVENT');
+            lines.push(`UID:${uid}`);
+            lines.push(`DTSTAMP:${timestamp}`);
+            lines.push(`DTSTART:${formatDateICS(ev.start)}`);
+            lines.push(`DTEND:${formatDateICS(ev.end)}`);
+            lines.push(`SUMMARY:${escapeICS(ev.title)}`);
+            lines.push('STATUS:CONFIRMED');
+            lines.push('TRANSP:OPAQUE');
+            lines.push('END:VEVENT');
+        });
+        
+        lines.push('END:VCALENDAR');
+        
+        // Join with CRLF as per RFC 5545
+        return lines.join('\r\n');
+    }
+
+    function formatDateICS(date) {
+        const pad = (n) => n.toString().padStart(2, '0');
+        return date.getUTCFullYear() +
+               pad(date.getUTCMonth() + 1) +
+               pad(date.getUTCDate()) + 'T' +
+               pad(date.getUTCHours()) +
+               pad(date.getUTCMinutes()) +
+               pad(date.getUTCSeconds()) + 'Z';
+    }
+
+    function escapeICS(text) {
+        return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
+    }
+
+    function downloadFallback(icsContent, name) {
+        try {
+            const blob = new Blob([icsContent], { 
+                type: 'text/calendar;charset=utf-8' 
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${name.replace(/[^a-z0-9]/gi, '_')}_Roster.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            document.getElementById('instructions').classList.add('show');
+            showStatus("✅ Calendar file downloaded! Open it on your iPhone to import.", "success");
+        } catch (err) {
+            showStatus("❌ Download failed. Try the Email option instead.", "error");
+        }
+    }
+
+    function showStatus(msg, type) {
+        const el = document.getElementById('status');
+        el.textContent = msg;
+        el.className = type;
+        el.style.display = 'block';
+        
+        // Auto-hide success messages after 10 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 10000);
+        }
+    }
+</script>
+
 </body>
 </html>
