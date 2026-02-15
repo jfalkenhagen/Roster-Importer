@@ -12,11 +12,6 @@
             --card: #FFFFFF;
             --text: #000000;
             --error: #FF3B30;
-            --success: #34C759;
-        }
-
-        * {
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -45,7 +40,6 @@
             font-size: 24px;
             margin-bottom: 20px;
             text-align: center;
-            font-weight: 600;
         }
 
         label {
@@ -64,11 +58,6 @@
             border-radius: 8px;
             font-size: 16px;
             box-sizing: border-box;
-            background: white;
-        }
-
-        input[type="file"] {
-            cursor: pointer;
         }
 
         button {
@@ -79,96 +68,57 @@
             width: 100%;
             border-radius: 12px;
             font-size: 18px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            transition: opacity 0.2s;
-            margin-bottom: 10px;
+            transition: background 0.2s;
         }
 
         button:active {
-            opacity: 0.7;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        button.secondary {
-            background-color: #8E8E93;
+            opacity: 0.8;
         }
 
         .suggestions {
             border: 1px solid #ddd;
             border-radius: 8px;
-            max-height: 200px;
+            max-height: 150px;
             overflow-y: auto;
             background: white;
             position: absolute;
             width: calc(100% - 48px);
             z-index: 1000;
             display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-top: -16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .suggestion-item {
-            padding: 14px 12px;
+            padding: 12px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
-            font-size: 15px;
         }
 
         .suggestion-item:last-child {
             border-bottom: none;
         }
 
-        .suggestion-item:active {
-            background-color: #e8e8e8;
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
         }
 
         #status {
             margin-top: 20px;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             text-align: center;
             display: none;
-            font-size: 14px;
-            line-height: 1.5;
         }
 
-        .error { 
-            background-color: #ffe5e5; 
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-        
-        .success { 
-            background-color: #e5ffe5; 
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
+        .error { background-color: #ffe5e5; color: var(--error); }
+        .success { background-color: #e5ffe5; color: #34C759; }
 
-        .hidden { 
-            display: none !important; 
-        }
-
-        .step-number {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 24px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-right: 8px;
-        }
+        .hidden { display: none; }
 
         .instructions {
-            background: #f9f9f9;
+            background: #f0f8ff;
             border-left: 4px solid var(--primary);
             padding: 12px;
             margin-top: 16px;
@@ -186,43 +136,34 @@
             margin: 8px 0;
             padding-left: 20px;
         }
-
-        .instructions li {
-            margin: 4px 0;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📅 Roster Importer</h1>
+    <h1>Roster Importer</h1>
     
-    <label for="upload"><span class="step-number">1</span>Select Excel File</label>
+    <label for="upload">1. Select Excel File</label>
     <input type="file" id="upload" accept=".xlsx, .xls">
 
     <div id="search-container" class="hidden">
-        <label for="nameInput"><span class="step-number">2</span>Search Your Name</label>
+        <label for="nameInput">2. Search Name</label>
         <div style="position: relative;">
-            <input type="text" id="nameInput" placeholder="Start typing your name..." autocomplete="off">
+            <input type="text" id="nameInput" placeholder="e.g., Angela Thomson" autocomplete="off">
             <div id="suggestions" class="suggestions"></div>
         </div>
 
-        <div class="button-group">
-            <button id="generateBtn">📲 Share Calendar File</button>
-            <button id="emailBtn" class="secondary">📧 Email Instructions</button>
-        </div>
-        
+        <button id="generateBtn">📧 Email Calendar to Myself</button>
+
         <div id="instructions" class="instructions">
             <strong>📲 How to Import on iPhone:</strong>
             <ol>
-                <li><strong>Using Share:</strong> Tap "Share Calendar File" → Save to Files → Open the file → Tap "Add All"</li>
-                <li><strong>Using Email:</strong> Tap "Email Instructions" → Send to yourself → Open email on iPhone → Follow the steps in the email</li>
+                <li>Tap the button above to open Mail</li>
+                <li>Send the email to yourself</li>
+                <li>Open the email on your iPhone</li>
+                <li>Scroll down and tap on the calendar data</li>
+                <li>Your iPhone will recognize it and show "Add All"</li>
+                <li>Tap "Add All" to import to your Calendar</li>
             </ol>
         </div>
     </div>
@@ -234,101 +175,94 @@
     let rosterData = [];
     let rosterDates = [];
     let staffNames = [];
-    let lastGeneratedICS = null;
-    let lastGeneratedName = null;
 
-    // File Upload Handler
+    // 1. Listen for File Upload
     document.getElementById('upload').addEventListener('change', handleFile, false);
 
     function handleFile(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        showStatus("📂 Loading file...", "success");
-
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array', cellDates: true});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rawData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-                processExcelData(rawData);
-            } catch (error) {
-                showStatus("❌ Error reading file. Please ensure it's a valid Excel file.", "error");
-            }
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+            
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rawData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+            
+            processExcelData(rawData);
         };
         reader.readAsArrayBuffer(file);
     }
 
-    // Process Excel Data
+    // 2. Process Excel Structure
     function processExcelData(data) {
         rosterData = data;
         staffNames = [];
         rosterDates = [];
 
-        // Find header row with "SURNAME"
+        // Find the header row containing "SURNAME"
         let headerRowIndex = -1;
-        for(let i = 0; i < Math.min(data.length, 10); i++) {
+        
+        for(let i=0; i<data.length; i++) {
             const row = data[i];
-            if (row && row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('SURNAME'))) {
+            if (row.some(cell => typeof cell === 'string' && cell.toUpperCase().includes('SURNAME'))) {
                 headerRowIndex = i;
                 break;
             }
         }
 
         if (headerRowIndex === -1) {
-            showStatus("❌ Could not find 'SURNAME' column. Please check your file format.", "error");
+            showStatus("Error: Could not find 'SURNAME' header in spreadsheet.", "error");
             return;
         }
 
-        // Extract dates from the row above header
-        const dateRow = data[headerRowIndex - 1] || data[headerRowIndex];
-        dateRow.forEach((cell, index) => {
-            if (index > 0) {
-                if (cell instanceof Date) {
-                    rosterDates.push({ index: index, date: cell });
-                } else if (typeof cell === 'string' && !isNaN(Date.parse(cell))) {
-                    rosterDates.push({ index: index, date: new Date(cell) });
-                } else if (typeof cell === 'number') {
-                    const date = new Date((cell - 25569) * 86400 * 1000);
-                    if (date.getFullYear() > 2000 && date.getFullYear() < 2100) {
-                        rosterDates.push({ index: index, date: date });
-                    }
-                }
+        // Extract Dates from the same header row (numbers like 16, 17, 18...)
+        const headerRow = data[headerRowIndex];
+        
+        headerRow.forEach((cell, index) => {
+            // Look for day numbers (1-31) in columns after the first few
+            if (index > 3 && typeof cell === 'number' && cell >= 1 && cell <= 31) {
+                // Create a date - we'll need to figure out the month/year from context
+                // For now, use current year and month as placeholder
+                const today = new Date();
+                const date = new Date(today.getFullYear(), today.getMonth(), cell);
+                rosterDates.push({ index: index, date: date });
+            } else if (index > 3 && cell instanceof Date) {
+                rosterDates.push({ index: index, date: cell });
             }
         });
 
-        // Extract staff names
+        // Extract Names (Column 0)
         for (let i = headerRowIndex + 1; i < data.length; i++) {
             const row = data[i];
-            if (row[0] && typeof row[0] === 'string' && row[0].trim()) {
+            if (row[0] && typeof row[0] === 'string' && row[0].trim().length > 0) {
                 const name = row[0].trim();
-                if (!name.toUpperCase().includes('TOTAL') && 
-                    !name.toUpperCase().includes('SURNAME') &&
-                    name.length > 2) {
+                // Skip totals and other non-name rows
+                if (!name.toUpperCase().includes('TOTAL') && !name.toUpperCase().includes('CASUAL')) {
                     staffNames.push(name);
                 }
             }
         }
 
+        // UI Updates
         if (staffNames.length > 0 && rosterDates.length > 0) {
             document.getElementById('search-container').classList.remove('hidden');
-            showStatus(`✅ Loaded ${staffNames.length} staff members and ${rosterDates.length} dates.`, "success");
-            document.getElementById('nameInput').focus();
+            showStatus(`Loaded ${staffNames.length} staff members and ${rosterDates.length} days.`, "success");
         } else if (staffNames.length === 0) {
-            showStatus("❌ No staff names found. Check that names are in the first column.", "error");
+            showStatus("File loaded, but no names found in Column A.", "error");
         } else {
-            showStatus("❌ No dates found. Check that dates are in the header row.", "error");
+            showStatus("No dates found. Check that dates are in the header row.", "error");
         }
     }
 
-    // Autocomplete
+    // 3. Autocomplete & Search Logic
     const nameInput = document.getElementById('nameInput');
     const suggestionsBox = document.getElementById('suggestions');
 
-    nameInput.addEventListener('input', function() {
-        const input = this.value.toLowerCase().trim();
+    nameInput.addEventListener('keyup', function() {
+        const input = this.value.toLowerCase();
         suggestionsBox.innerHTML = '';
         
         if (input.length < 2) {
@@ -336,12 +270,12 @@
             return;
         }
 
-        const searchParts = input.split(/[\s,]+/).filter(p => p.length > 0);
-        
+        const searchParts = input.split(/[\s,]+/);
+
         const matches = staffNames.filter(name => {
             const lowerName = name.toLowerCase();
             return searchParts.every(part => lowerName.includes(part));
-        }).slice(0, 10);
+        });
 
         if (matches.length > 0) {
             suggestionsBox.style.display = 'block';
@@ -349,10 +283,10 @@
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
                 div.textContent = match;
-                div.addEventListener('click', function() {
+                div.onclick = function() {
                     nameInput.value = match;
                     suggestionsBox.style.display = 'none';
-                });
+                };
                 suggestionsBox.appendChild(div);
             });
         } else {
@@ -366,113 +300,25 @@
         }
     });
 
-    // Generate Calendar - Main Button
+    // 4. Generate Calendar Logic
     document.getElementById('generateBtn').addEventListener('click', function() {
-        const icsContent = generateCalendar();
-        if (!icsContent) return;
-
-        // Try Web Share API first (best for iOS)
-        if (navigator.share && navigator.canShare) {
-            try {
-                const file = new File(
-                    [icsContent], 
-                    `${lastGeneratedName.replace(/[^a-z0-9]/gi, '_')}_Roster.ics`, 
-                    { type: 'text/calendar' }
-                );
-
-                if (navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        title: `${lastGeneratedName} Roster`,
-                        text: 'Work roster calendar',
-                        files: [file]
-                    }).then(() => {
-                        document.getElementById('instructions').classList.add('show');
-                        showStatus("✅ Calendar shared! Save to Files, then tap to open in Calendar app.", "success");
-                    }).catch((err) => {
-                        if (err.name !== 'AbortError') {
-                            downloadFallback(icsContent, lastGeneratedName);
-                        }
-                    });
-                    return;
-                }
-            } catch (err) {
-                console.log('Share API failed:', err);
-            }
-        }
-
-        // Fallback to download
-        downloadFallback(icsContent, lastGeneratedName);
-    });
-
-    // Email Button
-    document.getElementById('emailBtn').addEventListener('click', function() {
-        const icsContent = generateCalendar();
-        if (!icsContent) return;
-
-        const subject = encodeURIComponent(`${lastGeneratedName} Work Roster`);
-        const body = encodeURIComponent(
-`Hi,
-
-Your work roster calendar file is ready!
-
-TO IMPORT ON iPHONE:
-1. Open this email on your iPhone
-2. Scroll down to see the calendar data below
-3. Tap and hold on the calendar data
-4. Select "Copy"
-5. Open Notes app and paste
-6. Tap the pasted text
-7. Your iPhone will offer to create calendar events
-8. Tap "Add All"
-
-CALENDAR DATA (Copy everything below this line):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-${icsContent}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Alternatively, you can save this as a file named "roster.ics" and open it on your iPhone.
-
-`);
-        
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        document.getElementById('instructions').classList.add('show');
-        showStatus("📧 Email opened! Send it to yourself and follow the instructions.", "success");
-    });
-
-    function generateCalendar() {
-        const selectedName = nameInput.value.trim();
-        
+        const selectedName = nameInput.value;
         if (!selectedName) {
-            showStatus("⚠️ Please enter a name.", "error");
-            return null;
+            showStatus("Please enter a name.", "error");
+            return;
         }
 
-        let targetRow = rosterData.find(row => row[0] === selectedName);
+        // Find the row for this person
+        const targetRow = rosterData.find(row => row[0] === selectedName);
 
         if (!targetRow) {
-            const lowerSelected = selectedName.toLowerCase();
-            targetRow = rosterData.find(row => 
-                row[0] && typeof row[0] === 'string' && 
-                row[0].toLowerCase() === lowerSelected
-            );
-        }
-
-        if (!targetRow) {
-            const similar = staffNames.filter(name => 
-                name.toLowerCase().includes(selectedName.toLowerCase())
-            ).slice(0, 3);
-            
-            let errorMsg = `❌ Could not find "${selectedName}".`;
-            if (similar.length > 0) {
-                errorMsg += `\n\nDid you mean:\n• ${similar.join('\n• ')}`;
-            }
-            showStatus(errorMsg, "error");
-            return null;
+            showStatus(`Could not find "${selectedName}". Please select a name from the list.`, "error");
+            return;
         }
 
         let events = [];
+        
+        // Loop through the columns where we found dates
         rosterDates.forEach(dateObj => {
             const colIndex = dateObj.index;
             const shiftContent = targetRow[colIndex];
@@ -486,25 +332,18 @@ Alternatively, you can save this as a file named "roster.ics" and open it on you
         });
 
         if (events.length === 0) {
-            showStatus("❌ No shifts found for this person.", "error");
-            return null;
+            showStatus("No shifts found for this user.", "error");
+            return;
         }
 
-        lastGeneratedName = selectedName;
-        lastGeneratedICS = createICSContent(events, selectedName);
-        return lastGeneratedICS;
-    }
+        emailICS(events, selectedName);
+    });
 
     function parseShift(cellText, date) {
-        const cleaned = cellText.trim().toUpperCase();
-        
-        // Skip non-work days
-        if (!cleaned || cleaned === 'X' || cleaned === 'RDO' || 
-            cleaned.includes('SECONDMENT') || cleaned.includes('LWOP')) {
-            return null;
-        }
+        // Ignore "X" (Day off) or empty
+        if (!cellText || cellText.trim().toUpperCase() === 'X') return null;
 
-        // Check for time range (e.g., "0800-1630")
+        // Check for times: Pattern 4 digits - 4 digits (e.g. 0800-1630)
         const timeMatch = cellText.match(/(\d{4})-(\d{4})/);
         
         let title = `Shift: ${cellText}`;
@@ -515,16 +354,17 @@ Alternatively, you can save this as a file named "roster.ics" and open it on you
             const startStr = timeMatch[1];
             const endStr = timeMatch[2];
 
-            startDate.setHours(parseInt(startStr.substr(0,2)), parseInt(startStr.substr(2,2)), 0, 0);
-            endDate.setHours(parseInt(endStr.substr(0,2)), parseInt(endStr.substr(2,2)), 0, 0);
+            startDate.setHours(parseInt(startStr.substr(0,2)), parseInt(startStr.substr(2,2)), 0);
+            endDate.setHours(parseInt(endStr.substr(0,2)), parseInt(endStr.substr(2,2)), 0);
 
-            if (endDate <= startDate) {
+            // Handle overnight shifts
+            if (endDate < startDate) {
                 endDate.setDate(endDate.getDate() + 1);
             }
         } else {
-            // All-day event for codes like "A/L", "C", "ML"
-            startDate.setHours(9, 0, 0, 0);
-            endDate.setHours(17, 0, 0, 0);
+            // All day event for things like "A/L", "C", etc.
+            startDate.setHours(8, 0, 0);
+            endDate.setHours(17, 0, 0);
         }
 
         return {
@@ -534,39 +374,69 @@ Alternatively, you can save this as a file named "roster.ics" and open it on you
         };
     }
 
-    // Create iOS-compatible ICS content
-    function createICSContent(events, name) {
+    // 5. Email ICS File (iOS-Compatible)
+    function emailICS(events, name) {
+        // Create iOS-compatible ICS content
         const now = new Date();
         const timestamp = formatDateICS(now);
         
-        // Use CRLF line endings (required by iCalendar spec)
-        let lines = [];
-        lines.push('BEGIN:VCALENDAR');
-        lines.push('VERSION:2.0');
-        lines.push('PRODID:-//Roster Importer//EN');
-        lines.push('CALSCALE:GREGORIAN');
-        lines.push('METHOD:PUBLISH');
-        lines.push(`X-WR-CALNAME:${name} Work Roster`);
-        lines.push('X-WR-TIMEZONE:Australia/Brisbane');
+        let icsLines = [];
+        icsLines.push('BEGIN:VCALENDAR');
+        icsLines.push('VERSION:2.0');
+        icsLines.push('PRODID:-//Roster Importer//EN');
+        icsLines.push('CALSCALE:GREGORIAN');
+        icsLines.push('METHOD:PUBLISH');
+        icsLines.push(`X-WR-CALNAME:${name} Work Roster`);
         
         events.forEach((ev, index) => {
-            const uid = `${timestamp}-${index}@roster-importer`;
+            const uid = `${timestamp}-${index}@roster`;
             
-            lines.push('BEGIN:VEVENT');
-            lines.push(`UID:${uid}`);
-            lines.push(`DTSTAMP:${timestamp}`);
-            lines.push(`DTSTART:${formatDateICS(ev.start)}`);
-            lines.push(`DTEND:${formatDateICS(ev.end)}`);
-            lines.push(`SUMMARY:${escapeICS(ev.title)}`);
-            lines.push('STATUS:CONFIRMED');
-            lines.push('TRANSP:OPAQUE');
-            lines.push('END:VEVENT');
+            icsLines.push('BEGIN:VEVENT');
+            icsLines.push(`UID:${uid}`);
+            icsLines.push(`DTSTAMP:${timestamp}`);
+            icsLines.push(`DTSTART:${formatDateICS(ev.start)}`);
+            icsLines.push(`DTEND:${formatDateICS(ev.end)}`);
+            icsLines.push(`SUMMARY:${escapeICS(ev.title)}`);
+            icsLines.push('STATUS:CONFIRMED');
+            icsLines.push('END:VEVENT');
         });
         
-        lines.push('END:VCALENDAR');
+        icsLines.push('END:VCALENDAR');
         
-        // Join with CRLF as per RFC 5545
-        return lines.join('\r\n');
+        const icsContent = icsLines.join('\r\n');
+
+        // Create mailto link
+        const subject = encodeURIComponent(`${name} Work Roster`);
+        const body = encodeURIComponent(
+`Hi,
+
+Your work roster calendar is ready to import!
+
+TO ADD TO iPHONE CALENDAR:
+1. Open this email on your iPhone
+2. Scroll down to the calendar data below
+3. Tap and HOLD on the calendar data
+4. Select "Copy"
+5. Open the Notes app
+6. Paste the calendar data
+7. Tap on the pasted text
+8. iOS will recognize it and show "Add to Calendar"
+9. Tap "Add All"
+
+────────────────────────────
+CALENDAR DATA (copy everything below):
+
+${icsContent}
+
+────────────────────────────
+
+Found ${events.length} shifts for ${name}.
+`);
+        
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        
+        document.getElementById('instructions').classList.add('show');
+        showStatus("📧 Email opened! Send it to yourself, then follow the instructions to import on iPhone.", "success");
     }
 
     function formatDateICS(date) {
@@ -583,39 +453,11 @@ Alternatively, you can save this as a file named "roster.ics" and open it on you
         return text.replace(/[\\,;]/g, '\\$&').replace(/\n/g, '\\n');
     }
 
-    function downloadFallback(icsContent, name) {
-        try {
-            const blob = new Blob([icsContent], { 
-                type: 'text/calendar;charset=utf-8' 
-            });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${name.replace(/[^a-z0-9]/gi, '_')}_Roster.ics`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            
-            document.getElementById('instructions').classList.add('show');
-            showStatus("✅ Calendar file downloaded! Open it on your iPhone to import.", "success");
-        } catch (err) {
-            showStatus("❌ Download failed. Try the Email option instead.", "error");
-        }
-    }
-
     function showStatus(msg, type) {
         const el = document.getElementById('status');
         el.textContent = msg;
         el.className = type;
         el.style.display = 'block';
-        
-        // Auto-hide success messages after 10 seconds
-        if (type === 'success') {
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 10000);
-        }
     }
 </script>
 
