@@ -341,10 +341,9 @@
 
 <script>
     let rosterData = [];
-    let staffList = []; // Array of {fullName, firstName, rowIndex}
-    let shiftDates = []; // Array of {colIndex, date}
-    let lastGeneratedICS = null;
-    let lastGeneratedName = null;
+    let staffList = [];
+    let shiftDates = [];
+    let weekStartDate = null;
 
     document.getElementById('upload').addEventListener('change', handleFile, false);
 
@@ -369,37 +368,84 @@
         reader.readAsArrayBuffer(file);
     }
 
+    // Parse Australian date format (DD/MM/YYYY or D/M/YYYY)
+    function parseAustralianDate(dateString) {
+        // Try to extract date from "DATE: 2/16/2026" format
+        const match = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (match) {
+            const day = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            const year = parseInt(match[3]);
+            
+            // Australian format: day/month/year
+            // Create date with month-1 because JS months are 0-indexed
+            return new Date(year, month - 1, day);
+        }
+        return null;
+    }
+
     function processExcelData(data) {
         rosterData = data;
         staffList = [];
         shiftDates = [];
+        weekStartDate = null;
 
-        // Find week starting date in F5 (row index 4, col index 5)
-        let weekStart = null;
-        if (data[4] && data[4][5]) {
-            const cellValue = data[4][5];
-            if (typeof cellValue === 'string' && cellValue.includes('DATE:')) {
-                const dateStr = cellValue.split('DATE:')[1].trim();
-                weekStart = new Date(dateStr);
-            } else if (cellValue instanceof Date) {
-                weekStart = cellValue;
+        // FLEXIBLE WEEK START DATE FINDER - with Australian date format support
+        for (let rowIndex = 0; rowIndex < Math.min(data.length, 7); rowIndex++) {
+            const row = data[rowIndex];
+            if (!row) continue;
+            
+            for (let colIndex = 0; colIndex < Math.min(row.length, 15); colIndex++) {
+                const cell = row[colIndex];
+                
+                // Check if cell is a Date object
+                if (cell instanceof Date && !isNaN(cell)) {
+                    if (cell.getFullYear() >= 2020 && cell.getFullYear() <= 2030) {
+                        weekStartDate = cell;
+                        console.log(`Found week start date: ${weekStartDate.toLocaleDateString('en-AU')} at row ${rowIndex + 1}, col ${String.fromCharCode(65 + colIndex)}`);
+                        break;
+                    }
+                }
+                
+                // Check if cell contains "DATE:" text - parse as Australian format
+                if (typeof cell === 'string' && cell.includes('DATE:')) {
+                    const parsedDate = parseAustralianDate(cell);
+                    if (parsedDate && !isNaN(parsedDate)) {
+                        weekStartDate = parsedDate;
+                        console.log(`Found week start date from text (AU format): ${weekStartDate.toLocaleDateString('en-AU')}`);
+                        break;
+                    }
+                }
+                
+                // Check for Excel serial date number
+                if (typeof cell === 'number' && cell > 40000 && cell < 50000) {
+                    weekStartDate = new Date((cell - 25569) * 86400 * 1000);
+                    console.log(`Found week start date from serial: ${weekStartDate.toLocaleDateString('en-AU')}`);
+                    break;
+                }
             }
+            
+            if (weekStartDate) break;
         }
 
-        if (!weekStart || isNaN(weekStart)) {
-            showStatus("❌ Could not find week starting date in cell F5.", "error");
+        if (!weekStartDate || isNaN(weekStartDate)) {
+            showStatus("❌ Could not find week starting date in rows 1-7. Please check file format.", "error");
             return;
         }
 
         // Find dates in row 7 (index 6), starting from column E (index 4)
-        // Row 7 contains day numbers like 16, 17, 18, etc.
-        const dateRow = data[6]; // Row 7 (0-indexed as 6)
+        const dateRow = data[6];
+        
+        if (!dateRow) {
+            showStatus("❌ Could not find row 7 with day numbers.", "error");
+            return;
+        }
         
         for (let colIndex = 4; colIndex < dateRow.length; colIndex++) {
             const cell = dateRow[colIndex];
             if (typeof cell === 'number' && cell >= 1 && cell <= 31) {
-                // Create date using the day number
-                const date = new Date(weekStart.getFullYear(), weekStart.getMonth(), cell);
+                // Use the week start date's month and year
+                const date = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), cell);
                 shiftDates.push({ colIndex: colIndex, date: date });
             }
         }
@@ -409,23 +455,21 @@
             return;
         }
 
-        // Find staff names - look for rows with "SURNAME, Firstname" pattern
-        // Each person has 2 rows: position in first row, shifts split across the two rows
+        // Find staff names
         for (let rowIndex = 7; rowIndex < data.length; rowIndex++) {
             const row = data[rowIndex];
-            const nameCell = row[0]; // Column A
+            const nameCell = row[0];
             
             if (nameCell && typeof nameCell === 'string') {
-                // Check if it matches "SURNAME, Firstname" pattern
                 if (nameCell.includes(',')) {
                     const parts = nameCell.split(',');
                     if (parts.length >= 2) {
                         const surname = parts[0].trim();
-                        const firstname = parts[1].trim().split(/\s+/)[0]; // Get first word of first name
+                        const firstname = parts[1].trim().split(/\s+/)[0];
                         
-                        // Skip header-like entries
                         if (!surname.toUpperCase().includes('TOTAL') && 
                             !surname.toUpperCase().includes('SURNAME') &&
+                            !surname.toUpperCase().includes('CASUAL') &&
                             surname.length > 1 && firstname.length > 0) {
                             staffList.push({
                                 fullName: nameCell,
@@ -440,7 +484,7 @@
 
         if (staffList.length > 0) {
             document.getElementById('search-container').classList.remove('hidden');
-            showStatus(`✅ Loaded ${staffList.length} staff members and ${shiftDates.length} days.`, "success");
+            showStatus(`✅ Loaded ${staffList.length} staff members and ${shiftDates.length} days (starting ${weekStartDate.toLocaleDateString('en-AU', {day: 'numeric', month: 'long', year: 'numeric'})}).`, "success");
             document.getElementById('nameInput').focus();
         } else {
             showStatus("❌ No staff names found. Check that names are in format 'SURNAME, Firstname'.", "error");
@@ -507,7 +551,7 @@
         showStatus("✅ Calendar file downloaded! Save to Files, then tap to open in Calendar.", "success");
     });
 
-    // Share/Email Button (uses Web Share API)
+    // Share/Email Button
     document.getElementById('shareBtn').addEventListener('click', function() {
         const result = generateCalendar();
         if (!result) return;
@@ -532,7 +576,6 @@
                 }
             });
         } else {
-            // Fallback: Download
             const blob = new Blob([result.icsContent], { type: 'text/calendar;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -572,10 +615,8 @@
             return null;
         }
 
-        // Parse shifts for this person
-        // Shifts are split across current row and next row
-        const topRow = rosterData[staff.rowIndex]; // Row with start times
-        const bottomRow = rosterData[staff.rowIndex + 1]; // Row with end times
+        const topRow = rosterData[staff.rowIndex];
+        const bottomRow = rosterData[staff.rowIndex + 1];
 
         let events = [];
 
@@ -614,7 +655,7 @@
         if (topStr.toUpperCase() === 'X' || topStr.toUpperCase() === 'RDO' ||
             topStr.includes('SECONDMENT') || topStr.includes('LWOP') ||
             topStr.includes('A/L') || topStr.includes('ML') ||
-            topStr.toUpperCase() === 'C') {
+            topStr.toUpperCase() === 'C' || topStr.toUpperCase() === 'R') {
             return null;
         }
 
@@ -622,37 +663,30 @@
         let oncallNumber = '';
         let isOncall = false;
         
-        // Check for circled numbers (①, ②, ③)
         const circledMatch = topStr.match(/[①②③]/);
         if (circledMatch) {
             oncallNumber = circledMatch[0];
             topStr = topStr.replace(/[①②③]/g, '');
         }
         
-        // Check for o/c
         if (topStr.includes('o/c') || bottomStr.includes('o/c')) {
             isOncall = true;
             topStr = topStr.replace(/o\/c/gi, '');
             bottomStr = bottomStr.replace(/o\/c/gi, '');
         }
         
-        // Remove i/c notation
         topStr = topStr.replace(/i\/c/gi, '');
         bottomStr = bottomStr.replace(/i\/c/gi, '');
 
         // Extract times
-        // Top cell format: "0800-" or "0800" or "1230-"
-        // Bottom cell format: "1630" or "1700" or "2100"
         let startTime = null;
         let endTime = null;
 
-        // Extract start time from top cell
         const startMatch = topStr.match(/(\d{4})/);
         if (startMatch) {
             startTime = startMatch[1];
         }
 
-        // Extract end time from bottom cell
         const endMatch = bottomStr.match(/(\d{4})/);
         if (endMatch) {
             endTime = endMatch[1];
@@ -660,19 +694,16 @@
 
         if (!startTime || !endTime) return null;
 
-        // Create event
         const startDate = new Date(date);
         const endDate = new Date(date);
 
         startDate.setHours(parseInt(startTime.substr(0, 2)), parseInt(startTime.substr(2, 2)), 0, 0);
         endDate.setHours(parseInt(endTime.substr(0, 2)), parseInt(endTime.substr(2, 2)), 0, 0);
 
-        // Handle overnight shifts
         if (endDate <= startDate) {
             endDate.setDate(endDate.getDate() + 1);
         }
 
-        // Build title
         let title = `${firstName}'s Shift: ${startTime}-${endTime}`;
         if (isOncall || oncallNumber) {
             title += ` o/c${oncallNumber}`;
